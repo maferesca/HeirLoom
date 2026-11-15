@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from datetime import date, timedelta
-from itertools import product
 from pathlib import Path
 
 from . import eto as eto_mod, water, scoring
@@ -39,6 +38,30 @@ def eto_series(series: dict, lat: float, elevation: float) -> dict:
     return out
 
 
+def soil_theta(soil: dict, zr: float) -> tuple[float, float]:
+    """Effective field capacity / wilting point for the root zone 0..zr (m).
+
+    `soil` is either {thetaFC, thetaWP} (single values) or {layers: [{top, bottom (m), fc, wp}]}.
+    With layers: thickness-weighted mean over the explored depth; if zr exceeds the deepest layer the
+    deepest layer is extended (recorded by the caller as a quality flag)."""
+    layers = soil.get("layers")
+    if not layers:
+        return soil["thetaFC"], soil["thetaWP"]
+    fc = wp = 0.0
+    for L in layers:
+        if L["top"] >= zr:
+            break
+        th = min(L["bottom"], zr) - L["top"]
+        fc += L["fc"] * th
+        wp += L["wp"] * th
+    covered = min(layers[-1]["bottom"], zr)
+    if zr > covered:
+        extra = zr - covered
+        fc += layers[-1]["fc"] * extra
+        wp += layers[-1]["wp"] * extra
+    return fc / zr, wp / zr
+
+
 def irrigation_days(start: date, n: int, irr: dict | None) -> dict:
     """Map date -> applied mm. Needs window, applicationMm and intervalDays; else {}.
     Applications fall every intervalDays counted from the window opening date of that year."""
@@ -62,12 +85,13 @@ def irrigation_days(start: date, n: int, irr: dict | None) -> dict:
 
 
 def run_year_cycle(series, eto, crop_id, year, plant_md, soil, dr0, plant_shift_days=0, precip_scale=1.0,
-                   irrigation=None, trace=False):
+                   irrigation=None, trace=False, ks_timing="previous_day"):
     crop = CATALOG["crops"][crop_id]
     kc = kc_curve(crop)
     start = date(year, plant_md[0], plant_md[1]) + timedelta(days=plant_shift_days)
     zr = soil.get("rootDepthM") or crop["rootDepthM"]
-    taw = water.taw(soil["thetaFC"], soil["thetaWP"], zr)
+    fc, wp = soil_theta(soil, zr)
+    taw = water.taw(fc, wp, zr)
     irr = irrigation_days(start, len(kc), irrigation)
     days = []
     for i, k in enumerate(kc):
@@ -80,30 +104,31 @@ def run_year_cycle(series, eto, crop_id, year, plant_md, soil, dr0, plant_shift_
         days.append({"precip": p * precip_scale, "precip_original": p, "etm": k * e,
                      "irrigation": irr.get(dt, 0.0), "date": dt.isoformat()})
     res = water.run_cycle(dr0, days, taw_mm=taw, p=crop["depletionFraction"], trace=trace,
-                          adjust_p_for_etc=True)
+                          adjust_p_for_etc=True, ks_timing=ks_timing)
     sc = scoring.water_score_cycle(res["eta_sum"], res["etm_sum"], crop["ky"])
     out = {"status": "ok" if sc else "pending", "etaSum": res["eta_sum"], "etmSum": res["etm_sum"],
            "dpSum": res["dp_sum"], "drEnd": res["dr_end"], "water": sc, "irrigationMm": res["irrigation_sum"],
            "precipAdjustedMm": res["precip_sum"], "drStart": dr0,
            "startDate": start.isoformat(), "cropId": crop_id, "ky": crop["ky"],
-           "rootDepthM": zr, "awcMmPerM": 1000 * (soil["thetaFC"] - soil["thetaWP"]), "tawMm": taw}
+           "rootDepthM": zr, "thetaFCEffective": fc, "thetaWPEffective": wp, "awcMmPerM": 1000 * (fc - wp), "tawMm": taw}
     if trace:
         out["daily"] = res["daily"]
     return out
 
 
 def run_rotation(series, eto, sequence, first_year, plant_md, soil, shift=0, precip_scale=1.0,
-                 irrigation=None, init_frac=0.5, trace=False):
+                 irrigation=None, init_frac=0.5, trace=False, ks_timing="previous_day"):
     """sequence: crop ids, one cycle per year. Initial Dr = init_frac*TAW (assumption, recorded)."""
     cycles, dr = [], None
     for j, c in enumerate(sequence):
         zr = soil.get("rootDepthM") or CATALOG["crops"][c]["rootDepthM"]
-        taw = water.taw(soil["thetaFC"], soil["thetaWP"], zr)
+        fc, wp = soil_theta(soil, zr)
+        taw = water.taw(fc, wp, zr)
         if dr is None:
             dr = init_frac * taw
         dr = min(dr, taw)
         cyc = run_year_cycle(series, eto, c, first_year + j, plant_md, soil, dr, shift, precip_scale,
-                             irrigation, trace=trace and j == 0)
+                             irrigation, trace=trace and j == 0, ks_timing=ks_timing)
         if cyc["status"] != "ok":
             return {"status": cyc["status"], "reason": cyc.get("reason"), "cycles": cycles}
         dr = cyc["drEnd"]
@@ -151,25 +176,3 @@ def in_window(md: tuple[int, int], window: dict | None) -> bool:
 def shifted_md(plant_md: tuple[int, int], shift: int, ref_year: int = 2001) -> tuple[int, int]:
     d = date(ref_year, plant_md[0], plant_md[1]) + timedelta(days=shift)
     return (d.month, d.day)
-
-
-def propose_alternatives(current: list[str], allowed: list[str], n: int, k: int = 2):
-    """Deterministic: all sequences of allowed crops, excluding current, ordered by
-    difference from the current practice then lexicographically. Returns (alts, limiting notes)."""
-    notes = []
-    pool = [c for c in allowed if c in CATALOG["crops"]]
-    if not pool:
-        return [], ["no allowed crop is in the regional catalog"]
-    cands = [list(s) for s in product(sorted(pool), repeat=n) if list(s) != current]
-    if len(pool) >= 2:  # a rotation needs more than one crop; documented project rule, not agronomic advice
-        cands = [s for s in cands if len(set(s)) >= 2]
-    cands.sort(key=lambda s: (-sum(a != b for a, b in zip(s, current)), s))
-    alts = cands[:k]
-    if len(pool) == 1:
-        notes.append(f"With only {pool[0]} allowed, no rotation (at least two crops) is possible; "
-                     + ("the only candidate is a monoculture." if alts else "there is no other viable sequence."))
-    elif len(alts) < k:
-        excluded = sorted(set(CATALOG["crops"]) - set(pool))
-        notes.append(f"Only {len(alts)} viable alternative(s) with allowed crops {sorted(pool)}"
-                     + (f"; excluded by the user: {excluded}" if excluded else ""))
-    return alts, notes

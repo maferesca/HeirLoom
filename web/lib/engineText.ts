@@ -47,6 +47,11 @@ const ES: Record<string, string> = {
   "alternatives are deterministic catalog candidates ordered by difference from current practice; not filtered by dominance because H, S, E, U are pending": "las alternativas son candidatas del catálogo ordenadas por diferencia con tu práctica actual; no se filtran por dominancia porque H, S, E y U están pendientes",
   "root depth constant from planting at the lower bound of the FAO-56 range (no root growth)": "profundidad radicular constante desde la siembra, en el límite inferior del rango de FAO-56 (sin crecimiento de raíces)",
   "Kc climate adjustment (FAO-56 eq. 62) and wetting-frequency refinement of Kc ini not applied": "no se aplica el ajuste climático de Kc (FAO-56 ec. 62) ni el refinamiento de Kc inicial por frecuencia de humedecimiento",
+  "Soil water parameters estimated from SoilGrids with a pedotransfer function (regional estimate, not a measurement)": "Los parámetros de agua del suelo se estimaron con SoilGrids y una función de pedotransferencia (estimación regional, no una medición)",
+  "Complete in-domain texture and organic carbon for every layer": "Textura y carbono orgánico completos y dentro del dominio de la función en cada capa",
+  "SoilGrids profile for this point": "Perfil de SoilGrids para este punto",
+  "Farmer measurement, regional source or a published pedotransfer function": "Medición tuya, fuente regional o función de pedotransferencia publicada",
+  "SoilGrids profile now available for the pilot point; RothC inputs still missing": "Ya hay perfil de SoilGrids para el punto piloto; faltan las demás entradas de RothC",
   "elevation for ETo = user value or NASA grid-cell elevation": "elevación para ETo = tu valor o la elevación de la celda NASA",
 };
 

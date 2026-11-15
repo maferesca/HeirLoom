@@ -1,20 +1,21 @@
 """Builds a rotation comparison run from farmer answers + a daily climate series.
 
-Pure logic (no network): `build_run(req, series, manifests)` is unit-testable with synthetic series.
+Pure logic (no network): `build_run(req, series, manifests, ...)` is unit-testable with synthetic series.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import uuid
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from . import scoring, simulate
+from . import ptf, scoring, screening, simulate, water
 
-ENGINE_VERSION = "0.3.0"
+ENGINE_VERSION = "0.4.0"
+INDICATORS = ("A", "H", "S", "E", "U")
 
 
 class Location(BaseModel):
@@ -30,6 +31,7 @@ class ProfileReq(BaseModel):
 
 
 class Soil(BaseModel):
+    """Values written by the user (farmer measurement/observation or demo assumption)."""
     thetaFC: float
     thetaWP: float
     rootDepthM: Optional[float] = None
@@ -39,7 +41,7 @@ class HistoryEntry(BaseModel):
     """One planting cycle. More than one crop = sown together (association)."""
     crops: list[str]
     year: Optional[int] = None
-    approxDate: Optional[str] = None  # free text such as "2023-06" or "mid June"
+    approxDate: Optional[str] = None
 
 
 class Window(BaseModel):
@@ -69,6 +71,13 @@ class Management(BaseModel):
     ownYieldsTPerHa: Optional[dict] = None
 
 
+class Constraints(BaseModel):
+    """Concrete restrictions declared by the farmer; each one becomes a filter on the catalog."""
+    seedUnavailable: list[str] = []
+    equipmentUnsupported: list[str] = []
+    noBuyer: list[str] = []
+
+
 class CompareReq(ProfileReq):
     history: list[HistoryEntry] = []
     currentSequence: list[str] = []  # legacy shortcut: one crop per year
@@ -78,11 +87,14 @@ class CompareReq(ProfileReq):
     waterRegime: Literal["rainfed", "irrigated", "both", "unknown"] = "unknown"
     irrigation: Optional[Irrigation] = None
     allowedCrops: Optional[list[str]] = None  # None = all catalog crops
-    constraintNotes: dict = {}  # seed / equipment / buyer, free text, recorded only
+    constraints: Constraints = Constraints()
+    constraintNotes: dict = {}  # free text, recorded only
     management: Management = Management()
-    soil: Optional[Soil] = None
-    soilIsDemo: bool = False
+    soil: Optional[Soil] = None  # user-written values
+    soilIsDemo: bool = False  # True => `soil` values are the illustrative demo assumption
+    soilSource: Optional[Literal["farmer", "regional", "demo"]] = None  # which source drives the water model
     initialDepletionFraction: float = Field(0.5, ge=0, le=1)
+    ksTiming: Literal["previous_day", "after_wetting"] = "previous_day"
     plantShiftDays: int = Field(0, ge=-30, le=30)
     precipScale: float = Field(1.0, ge=0.7, le=1.3)
 
@@ -99,7 +111,7 @@ PENDING = {
     ],
     "S": [
         _missing("model", "RothC official implementation (pinned version) with spin-up", "Not integrated"),
-        _missing("data", "Soil organic carbon, bulk density, coarse fragments, clay by layer", "SoilGrids rasters not downloaded"),
+        _missing("data", "Soil organic carbon, bulk density, coarse fragments, clay by layer", "SoilGrids profile now available for the pilot point; RothC inputs still missing"),
         _missing("data", "Crop residue biomass and retained fraction", "Only qualitative answer collected"),
     ],
     "E": [
@@ -113,6 +125,22 @@ PENDING = {
         _missing("source", "Normalization P10/P90 from a frozen regional reference sample", "No reference sample exists yet"),
     ],
 }
+
+
+def overall_from_indicators(indicators: dict) -> dict:
+    """Aggregate the REAL indicator scores. An indicator without a numeric `score` is missing.
+
+    Scores are the 1-100 values (A and H from the fraction rescale; S, E and U from the P10-P90 rescale).
+    Weights are fixed in scoring.overall_score: A,H,S,E = 1/6 each, U = 1/3."""
+    vals = {}
+    for k in INDICATORS:
+        ind = indicators.get(k) or {}
+        score = ind.get("score")
+        vals[k] = score if ind.get("status") in ("calculated", "provisional", "conditional") and isinstance(score, (int, float)) else None
+    out = scoring.overall_score(vals["A"], vals["H"], vals["S"], vals["E"], vals["U"])
+    out["components"] = {k: vals[k] for k in INDICATORS}
+    out["message"] = None if out["raw"] is not None else "Missing information to compute the overall score"
+    return out
 
 
 def _irrigation_state(req: CompareReq):
@@ -137,7 +165,57 @@ def _irrigation_state(req: CompareReq):
         f"Irrigation applied: {irr.applicationMm} mm every {irr.intervalDays} d inside the window; infrastructure and cost not modeled"], []
 
 
-def build_run(req: CompareReq, series: dict, manifests: list, effective_elevation: Optional[float] = None) -> dict:
+def _soil_sources(req: CompareReq, soil_profile: Optional[dict]):
+    """Keep the three soil sources apart. Returns (report, active soil dict for the engine or None)."""
+    sources: dict = {"farmer": None, "regional": None, "demo": None}
+    if req.soil:
+        key = "demo" if req.soilIsDemo else "farmer"
+        sources[key] = {"thetaFC": req.soil.thetaFC, "thetaWP": req.soil.thetaWP,
+                        "awcMmPerM": 1000 * (req.soil.thetaFC - req.soil.thetaWP),
+                        "rootDepthM": req.soil.rootDepthM,
+                        "sourceType": "demo_assumption" if req.soilIsDemo else "farmer_declared"}
+    reg_missing: list[dict] = []
+    if soil_profile:
+        if soil_profile.get("status") == "ok":
+            hyd = soil_profile.get("hydraulics") or {}
+            sources["regional"] = {
+                "sourceType": "spatial_estimate+pedotransfer",
+                "product": "SoilGrids 2.0", "manifest": soil_profile.get("manifest"),
+                "requested": soil_profile.get("requested"), "effective": soil_profile.get("effective"),
+                "distanceM": soil_profile.get("distanceM"), "qualityFlags": soil_profile.get("qualityFlags", []),
+                "layers": soil_profile.get("layers"),
+                "pedotransfer": {"method": "Saxton & Rawls (2006)", "inputs": "sand, clay (fractions), organic matter % = SOC x 1.724 / 10",
+                                 "layers": hyd.get("layers"), "usable": hyd.get("usable"), "issues": hyd.get("issues"),
+                                 "caveats": ["no coarse-fragment correction", "high-clay or Vertisol soils are poorly covered by the function",
+                                             "SoilGrids Q0.05-Q0.95 intervals are not propagated into theta"]},
+                "usable": bool(hyd.get("usable")),
+            }
+            if not hyd.get("usable"):
+                reg_missing.append(_missing("data", "Complete in-domain texture and organic carbon for every layer", "; ".join(hyd.get("issues") or [])))
+        else:
+            reg_missing.append(_missing("source", "SoilGrids profile for this point",
+                                        soil_profile.get("reason") or "service unavailable or no valid cell nearby"))
+    # choose the active source
+    want = req.soilSource or ("demo" if req.soilIsDemo else "farmer" if req.soil else "regional" if soil_profile else None)
+    active, active_soil, why = None, None, None
+    if want == "regional":
+        reg = sources["regional"]
+        if reg and reg["usable"]:
+            layers = soil_profile["hydraulics"]["engineLayers"]
+            active, active_soil = "regional", {"layers": layers}
+        else:
+            why = "regional estimate not usable"
+    elif want in ("farmer", "demo") and sources[want]:
+        active, active_soil = want, {"thetaFC": sources[want]["thetaFC"], "thetaWP": sources[want]["thetaWP"]}
+        if sources[want].get("rootDepthM"):
+            active_soil["rootDepthM"] = sources[want]["rootDepthM"]
+    report = {"sources": sources, "active": active, "requestedSource": want, "regionalMissing": reg_missing,
+              "isDemoAssumption": active == "demo", "unavailableReason": why}
+    return report, active_soil
+
+
+def build_run(req: CompareReq, series: dict, manifests: list, effective_elevation: Optional[float] = None,
+              soil_profile: Optional[dict] = None) -> dict:
     cat = simulate.CATALOG["crops"]
     plant_md = (req.plantMonth, req.plantDay)
     window = req.window.model_dump() if req.window else None
@@ -159,40 +237,51 @@ def build_run(req: CompareReq, series: dict, manifests: list, effective_elevatio
         raise ValueError("usual_planting_date_outside_window")
     scen_md = simulate.shifted_md(plant_md, req.plantShiftDays)
     outside = bool(window) and not simulate.in_window(scen_md, window)
-    candidates = []
+    candidates_cal = []
     for sh in (-30, -15, 0, 15, 30):
         md = simulate.shifted_md(plant_md, sh)
-        candidates.append({"shiftDays": sh, "month": md[0], "day": md[1],
-                           "viable": True if not window else simulate.in_window(md, window)})
+        candidates_cal.append({"shiftDays": sh, "month": md[0], "day": md[1],
+                               "viable": True if not window else simulate.in_window(md, window)})
     calendar = {"usual": list(plant_md), "window": window, "scenarioShiftDays": req.plantShiftDays,
-                "scenarioDate": list(scen_md), "scenarioOutsideWindow": outside, "candidates": candidates,
+                "scenarioDate": list(scen_md), "scenarioOutsideWindow": outside, "candidates": candidates_cal,
                 "note": None if window else "No planting window given: every date treated as viable"}
     if outside:
         warnings.append("The simulated planting date is outside your stated planting window.")
 
-    # ---- allowed crops and alternatives
+    # ---- screening of alternatives
     allowed = req.allowedCrops if req.allowedCrops is not None else sorted(cat)
-    alts, limit_notes = simulate.propose_alternatives(current_seq or [], allowed, n)
+    screen = screening.screen(current_seq, n, allowed, req.constraints.model_dump(), plant_md, window)
+    alts = screen["selected"]
+    if current_seq is not None:
+        cur_checks = screening.check_sequence(current_seq, {}, plant_md, window, len(cat))
+        screen["current"] = {"sequence": current_seq, "checks": cur_checks}
     if intercrop:
-        limit_notes.append("Current practice has crops sown together; alternatives are catalog candidates not tied to it.")
+        screen["notes"].append({"code": "intercrop_current", "params": {}})
 
-    # ---- environment of the water model
+    # ---- soil and water environment
     irr, irr_status, irr_conditions, irr_missing = _irrigation_state(req)
-    soil = req.soil.model_dump(exclude_none=True) if req.soil else None
+    soil_report, soil = _soil_sources(req, soil_profile)
     elev = req.location.elevation if req.location.elevation is not None else (effective_elevation or 0.0)
     eto = simulate.eto_series(series, req.location.lat, elev) if soil else None
     if req.management.runoff or req.management.waterlogging:
         warnings.append("You observe runoff/waterlogging: the model assumes RO=0 and CR=0, so water results may be optimistic.")
 
+    soil_conditions = {"demo": ["Soil values are illustrative demo assumptions"],
+                       "regional": ["Soil water parameters estimated from SoilGrids with a pedotransfer function (regional estimate, not a measurement)"],
+                       "farmer": []}.get(soil_report["active"], [])
+
     items = []
     plan = [("current", current_seq)] + [(f"alt{i+1}", a) for i, a in enumerate(alts)]
     for rid, seq in plan:
-        item = {"id": rid, "sequence": seq,
-                "structure": None if seq is None else ("monoculture" if len(set(seq)) == 1 else "rotation"),
+        if seq is None:
+            structure = "intercrop" if intercrop else None
+        else:
+            structure = "monoculture" if len(set(seq)) == 1 else "rotation"
+        item = {"id": rid, "sequence": seq, "structure": structure,
                 "history": [h.model_dump() for h in hist] if rid == "current" else None,
-                "indicators": {k: {"status": "pending", "missing": v,
+                "indicators": {k: {"status": "pending", "score": None, "missing": v,
                                    "reason": "; ".join(m["item"] for m in v)} for k, v in PENDING.items()}}
-        A = {"status": "pending", "missing": [], "conditions": []}
+        A = {"status": "pending", "score": None, "missing": [], "conditions": []}
         if rid == "current" and intercrop:
             A["reason"] = ("Crops sown together cannot be represented: the engine simulates one crop per cycle. "
                            "Not converted into a sequential rotation.")
@@ -202,22 +291,24 @@ def build_run(req: CompareReq, series: dict, manifests: list, effective_elevatio
             A["missing"] = [_missing("data", f"Catalog parameters for {unknown}")]
         elif not soil:
             A["reason"] = "Soil water parameters not available"
-            A["missing"] = [_missing("data", "Field capacity (m3/m3)", "Measurement, regional source or a published pedotransfer function"),
-                            _missing("data", "Wilting point (m3/m3)", "Same; SoilGrids alone does not provide it")]
+            A["missing"] = soil_report["regionalMissing"] + [
+                _missing("data", "Field capacity (m3/m3)", "Farmer measurement, regional source or a published pedotransfer function"),
+                _missing("data", "Wilting point (m3/m3)", "Same; SoilGrids alone does not provide it")]
         else:
             res = simulate.run_blocks(series, eto, seq, horizon_years, plant_md, soil,
                                       trace_first=(rid == "current"), shift=req.plantShiftDays,
                                       precip_scale=req.precipScale, irrigation=irr,
-                                      init_frac=req.initialDepletionFraction)
+                                      init_frac=req.initialDepletionFraction, ks_timing=req.ksTiming)
             A.update(res)
-            A["status"] = ("provisional" if irr_status in ("confirmed", "applied") else "conditional") if res["summary"] else "pending"
-            A["conditions"] = irr_conditions + (["Soil values are illustrative demo assumptions"] if req.soilIsDemo else [])
+            ok = bool(res["summary"])
+            A["status"] = ("provisional" if irr_status in ("confirmed", "applied") else "conditional") if ok else "pending"
+            A["score"] = res["summary"]["medianA"] if ok else None
+            A["conditions"] = irr_conditions + soil_conditions
             A["missing"] = irr_missing
-            if not res["summary"]:
+            if not ok:
                 A["reason"] = "No valid historical block (missing critical days)"
         item["indicators"]["A"] = A
-        item["overall"] = scoring.overall_score(None, None, None, None, None)
-        item["overall"]["message"] = "Missing information to compute the overall score"
+        item["overall"] = overall_from_indicators(item["indicators"])
         items.append(item)
 
     order = {"water": ["A", "H", "S", "E", "U"], "soil": ["S", "E", "A", "H", "U"],
@@ -230,9 +321,14 @@ def build_run(req: CompareReq, series: dict, manifests: list, effective_elevatio
         "sources": manifests, "elevationUsedM": elev,
         "calendar": calendar, "waterRegime": {"declared": req.waterRegime, "irrigationStatus": irr_status,
                                               "conditions": irr_conditions, "missing": irr_missing},
-        "soil": {"given": soil, "isDemoAssumption": req.soilIsDemo,
-                 "awcMmPerM": None if not soil else 1000 * (soil["thetaFC"] - soil["thetaWP"])},
-        "viableCrops": {"allowed": allowed, "alternativesLimit": limit_notes},
+        "waterBalance": {"ksTiming": req.ksTiming, "order": [
+            "scenario rainfall factor applied to P",
+            "Ks from the depletion at the end of the previous day (previous_day) or after same-day wetting (after_wetting)",
+            "inflow Q = P - RO + I + CR enters the store; drainage DP = excess over TAW",
+            "ETa = min(available water, Ks x ETm); depletion updated"]},
+        "soil": soil_report,
+        "screening": screen,
+        "viableCrops": {"allowed": allowed, "blocked": screen["blockedCrops"], "notes": screen["notes"]},
         "explanationOrder": order, "warnings": warnings,
         "rotations": items,
         "assumptions": [

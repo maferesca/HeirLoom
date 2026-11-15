@@ -1,10 +1,19 @@
-"""Daily soil-water bucket (spec 10.2). A project discretization, not full FAO/AquaCrop.
+"""Daily soil-water bucket. A project discretization, not full FAO/AquaCrop.
 
-Order: Wstart=TAW-Dr; Q=P-RO+I+CR; DP=max(0,Wstart+Q-TAW); Wwet=min(TAW,Wstart+Q);
-Ks on TAW-Wwet; ETa=min(Wwet,Ks*ETm); Wend=Wwet-ETa; Dr_end=TAW-Wend.
-Scenario rainfall factors are applied to P BEFORE this step (see simulate.run_year_cycle).
+ORDER OF OPERATIONS WITHIN ONE DAY (default `ks_timing="previous_day"`, FAO-56 ch. 8 and the DOCX):
+  0. Scenario rainfall factor is applied to P first (see simulate.run_year_cycle), then:
+  1. Ks is computed from the depletion at the END OF THE PREVIOUS DAY, Dr(i-1) (FAO-56 eq. 84 uses Dr,i-1).
+     Same-day rain therefore does NOT relieve stress on that day's ETa; it enters the store for the next day.
+  2. Water enters:  Wstart = TAW - Dr(i-1);  Q = P - RO + I + CR;
+     DP = max(0, Wstart + Q - TAW);  Wwet = min(TAW, Wstart + Q).
+  3. ETa = min(Wwet, Ks * ETm)   (single crop coefficient; ETm = Kc * ETo).
+  4. Wend = Wwet - ETa;  Dr(i) = TAW - Wend.  Mass is conserved.
+Alternative `ks_timing="after_wetting"` (master prompt, section 10.2) computes Ks on TAW - Wwet, i.e. after the
+same-day rain. It is kept only for comparison; see METHODS.md for the before/after comparison.
 """
 from __future__ import annotations
+
+KS_TIMINGS = ("previous_day", "after_wetting")
 
 
 def taw(theta_fc: float, theta_wp: float, zr_m: float) -> float:
@@ -23,15 +32,19 @@ def ks(dr: float, taw_mm: float, p: float) -> float:
 
 
 def step(dr_start: float, *, taw_mm: float, p: float, precip: float, etm: float,
-         runoff: float = 0.0, irrigation: float = 0.0, capillary: float = 0.0) -> dict:
+         runoff: float = 0.0, irrigation: float = 0.0, capillary: float = 0.0,
+         ks_timing: str = "previous_day") -> dict:
+    if ks_timing not in KS_TIMINGS:
+        raise ValueError(f"ks_timing must be one of {KS_TIMINGS}")
     w_start = taw_mm - dr_start
     q = precip - runoff + irrigation + capillary
     dp = max(0.0, w_start + q - taw_mm)
     w_wet = min(taw_mm, w_start + q)
-    k = ks(taw_mm - w_wet, taw_mm, p)
+    dr_for_ks = dr_start if ks_timing == "previous_day" else taw_mm - w_wet
+    k = ks(dr_for_ks, taw_mm, p)
     eta = min(w_wet, k * etm)
     w_end = w_wet - eta
-    return {"dr_end": taw_mm - w_end, "eta": eta, "dp": dp, "ks": k}
+    return {"dr_end": taw_mm - w_end, "eta": eta, "dp": dp, "ks": k, "dr_for_ks": dr_for_ks}
 
 
 def adjust_p(p: float, etc_mm_day: float) -> float:
@@ -40,7 +53,7 @@ def adjust_p(p: float, etc_mm_day: float) -> float:
 
 
 def run_cycle(dr0: float, days: list[dict], *, taw_mm: float, p: float, trace: bool = False,
-              adjust_p_for_etc: bool = False) -> dict:
+              adjust_p_for_etc: bool = False, ks_timing: str = "previous_day") -> dict:
     """days: [{precip, etm, runoff?, irrigation?, capillary?, precip_original?, date?}].
     Returns sums, end state and (optionally) a daily trace for auditing."""
     dr, eta_sum, etm_sum, dp_sum, irr_sum, p_sum = dr0, 0.0, 0.0, 0.0, 0.0, 0.0
@@ -50,15 +63,15 @@ def run_cycle(dr0: float, days: list[dict], *, taw_mm: float, p: float, trace: b
         p_day = adjust_p(p, d["etm"]) if adjust_p_for_etc else p
         r = step(dr, taw_mm=taw_mm, p=p_day, precip=d["precip"], etm=d["etm"],
                  runoff=d.get("runoff", 0.0), irrigation=d.get("irrigation", 0.0),
-                 capillary=d.get("capillary", 0.0))
+                 capillary=d.get("capillary", 0.0), ks_timing=ks_timing)
         dr = r["dr_end"]
         eta_sum += r["eta"]; etm_sum += d["etm"]; dp_sum += r["dp"]
         irr_sum += d.get("irrigation", 0.0); p_sum += d["precip"]
         if trace:
             rows.append({"date": d.get("date"), "precipOriginalMm": d.get("precip_original", d["precip"]),
                          "precipAdjustedMm": d["precip"], "irrigationMm": d.get("irrigation", 0.0),
-                         "etmMm": d["etm"], "pUsed": p_day, "etaMm": r["eta"], "dpMm": r["dp"], "ks": r["ks"],
-                         "drStartMm": dr_in, "drEndMm": r["dr_end"]})
+                         "etmMm": d["etm"], "pUsed": p_day, "drForKsMm": r["dr_for_ks"], "ks": r["ks"],
+                         "etaMm": r["eta"], "dpMm": r["dp"], "drStartMm": dr_in, "drEndMm": r["dr_end"]})
     out = {"dr_end": dr, "eta_sum": eta_sum, "etm_sum": etm_sum, "dp_sum": dp_sum,
            "irrigation_sum": irr_sum, "precip_sum": p_sum}
     if trace:

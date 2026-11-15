@@ -5,18 +5,47 @@ type Props = {
   lat: number | null; lon: number | null;
   onChange: (lat: number, lon: number) => void;
   unavailableText: string; failedText: string;
+  /** Increments each time a locality is confirmed from the search: frames it at locality zoom. */
+  flyToken?: number;
 };
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const LOCALITY_ZOOM = 12;
+const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const valid = (a: number | null, b: number | null): a is number => a != null && b != null && isFinite(a) && isFinite(b);
 
 // Loaded on demand (mapbox-gl is only imported when the component mounts with a token).
-export default function MapPicker({ lat, lon, onChange, unavailableText, failedText }: Props) {
+export default function MapPicker({ lat, lon, onChange, unavailableText, failedText, flyToken = 0 }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
+  const mbRef = useRef<typeof import("mapbox-gl").default | null>(null);
   const markerRef = useRef<import("mapbox-gl").Marker | null>(null);
+  const loadedRef = useRef(false);
+  const latest = useRef({ lat, lon });
+  const pendingFocus = useRef(false);
   const cb = useRef(onChange);
   const [failed, setFailed] = useState(false);
   cb.current = onChange;
+  latest.current = { lat, lon };
+
+  function ensureMarker(la: number, lo: number) {
+    const map = mapRef.current, mb = mbRef.current;
+    if (!map || !mb) return;
+    if (markerRef.current) { markerRef.current.setLngLat([lo, la]); return; }
+    const m = new mb.Marker({ draggable: true, color: "#A4523A" }).setLngLat([lo, la]).addTo(map);
+    m.on("dragend", () => { const p = m.getLngLat(); cb.current(p.lat, p.lng); });
+    markerRef.current = m;
+  }
+
+  // Frame the confirmed locality: marker visible and centered at locality zoom
+  function frame(animate: boolean) {
+    const map = mapRef.current; const { lat: la, lon: lo } = latest.current;
+    if (!map || !valid(la, lo)) return;
+    ensureMarker(la, lo!);
+    map.resize();
+    const opts = { center: [lo!, la] as [number, number], zoom: LOCALITY_ZOOM };
+    if (animate && !reduced()) map.flyTo({ ...opts, duration: 900 }); else map.jumpTo(opts);
+  }
 
   useEffect(() => {
     if (!TOKEN || !el.current) return;
@@ -25,44 +54,45 @@ export default function MapPicker({ lat, lon, onChange, unavailableText, failedT
       try {
         const mapboxgl = (await import("mapbox-gl")).default;
         if (cancelled || !el.current) return;
+        mbRef.current = mapboxgl;
         mapboxgl.accessToken = TOKEN;
+        const { lat: la0, lon: lo0 } = latest.current;
         const map = new mapboxgl.Map({
           container: el.current,
           style: "mapbox://styles/mapbox/satellite-streets-v12",
-          center: [lon ?? -94.42, lat ?? 18.15],
-          zoom: lat != null ? 12 : 5,
+          center: [lo0 ?? -94.42, la0 ?? 18.15],
+          zoom: valid(la0, lo0) ? LOCALITY_ZOOM : 5,
         });
         map.addControl(new mapboxgl.NavigationControl({ showCompass: false }));
-        const place = (la: number, lo: number) => {
-          if (!markerRef.current) {
-            const m = new mapboxgl.Marker({ draggable: true, color: "#C89B50" }).setLngLat([lo, la]).addTo(map);
-            m.on("dragend", () => { const p = m.getLngLat(); cb.current(p.lat, p.lng); });
-            markerRef.current = m;
-          } else markerRef.current.setLngLat([lo, la]);
-        };
-        map.on("click", (e) => { place(e.lngLat.lat, e.lngLat.lng); cb.current(e.lngLat.lat, e.lngLat.lng); });
+        map.on("click", (e) => { ensureMarker(e.lngLat.lat, e.lngLat.lng); cb.current(e.lngLat.lat, e.lngLat.lng); });
         map.on("error", () => setFailed(true));
-        if (lat != null && lon != null) place(lat, lon);
+        map.on("load", () => {  // adjust the framing once the map is ready
+          loadedRef.current = true;
+          if (pendingFocus.current || valid(latest.current.lat, latest.current.lon)) { pendingFocus.current = false; frame(false); }
+        });
         mapRef.current = map;
       } catch { setFailed(true); }
     })();
-    return () => { cancelled = true; mapRef.current?.remove(); mapRef.current = null; markerRef.current = null; };
+    return () => { cancelled = true; loadedRef.current = false; mapRef.current?.remove(); mapRef.current = null; markerRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep map in sync when coordinates are typed or a place is chosen
+  // Typed coordinates or a dragged marker: keep the marker in sync (no re-zoom)
   useEffect(() => {
+    if (!mapRef.current || !loadedRef.current || !valid(lat, lon)) return;
+    ensureMarker(lat, lon!);
     const map = mapRef.current;
-    if (!map || lat == null || lon == null || !isFinite(lat) || !isFinite(lon)) return;
-    if (markerRef.current) markerRef.current.setLngLat([lon, lat]);
-    else import("mapbox-gl").then(({ default: mb }) => {
-      if (!mapRef.current || markerRef.current) return;
-      const m = new mb.Marker({ draggable: true, color: "#C89B50" }).setLngLat([lon, lat]).addTo(mapRef.current);
-      m.on("dragend", () => { const p = m.getLngLat(); cb.current(p.lat, p.lng); });
-      markerRef.current = m;
-    });
-    map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 11), duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1200 });
+    if (!map.getBounds()?.contains([lon!, lat])) map.flyTo({ center: [lon!, lat], zoom: Math.max(map.getZoom(), 11), duration: reduced() ? 0 : 900 });
+     
   }, [lat, lon]);
+
+  // A locality was confirmed from the search: center it at locality zoom
+  useEffect(() => {
+    if (!flyToken) return;
+    if (!mapRef.current || !loadedRef.current) { pendingFocus.current = true; return; }
+    frame(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flyToken]);
 
   if (!TOKEN) return <p className="tag">{unavailableText}</p>;
   return (

@@ -22,9 +22,9 @@ def _load_env_file():
 
 _load_env_file()
 
-from . import compare, quality, simulate  # noqa: E402
+from . import compare, ptf, quality, simulate  # noqa: E402
 from .compare import CompareReq, ProfileReq  # noqa: E402
-from .providers import nasa_power  # noqa: E402
+from .providers import nasa_power, soilgrids  # noqa: E402
 
 app = FastAPI(title="Heirloom engine", version=compare.ENGINE_VERSION)
 app.add_middleware(CORSMiddleware, allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
@@ -73,12 +73,27 @@ def location_profile(req: ProfileReq):
             "provenance": "reanalysis", "spatialNote": "regional grid cell, not parcel resolution"}
 
 
+def soil_profile_for(lat: float, lon: float) -> dict:
+    """SoilGrids profile (cached on disk) plus pedotransfer hydraulics, or an 'unavailable' record."""
+    prof = soilgrids.fetch_profile(lat, lon)
+    if prof.get("status") == "ok":
+        prof["hydraulics"] = ptf.profile_hydraulics(prof["layers"])
+    return prof
+
+
+@app.post("/api/soil-profile")
+def soil_profile(req: ProfileReq):
+    return soil_profile_for(req.location.lat, req.location.lon)
+
+
 @app.post("/api/rotation-comparison")
 def rotation_comparison(req: CompareReq):
     series, manifests = load_series(req)
     eff = manifests[0]["effectiveLocation"]
+    profile = soil_profile_for(req.location.lat, req.location.lon) if req.soilSource == "regional" else None
     try:
-        run = compare.build_run(req, series, manifests, eff[2] if isinstance(eff, list) and len(eff) > 2 else None)
+        run = compare.build_run(req, series, manifests, eff[2] if isinstance(eff, list) and len(eff) > 2 else None,
+                                soil_profile=profile)
     except ValueError as e:
         raise HTTPException(422, str(e))
     RUNS[run["runId"]] = run

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { T, type Lang } from "@/lib/i18n";
 import MapPicker from "./MapPicker";
 import { tr as trEng } from "@/lib/engineText";
+import { reasonText } from "@/lib/screeningText";
 
 const API = process.env.NEXT_PUBLIC_ENGINE_URL ?? "http://localhost:8000";
 type Place = { name: string; full: string; lat: number; lon: number };
@@ -29,9 +30,9 @@ function Bars({ values, label, unit, fmt = 0 }: { values: (number | null)[]; lab
           const h = v == null ? 0 : (Math.max(v, 0) / max) * 90;
           return (
             <g key={i}>
-              <rect x={i * 30 + 4} y={100 - h} width={22} height={h} fill="#626B5D" />
-              <text x={i * 30 + 15} y={114} fontSize="10" textAnchor="middle" fill="#626B5D">{months[i]}</text>
-              {v != null && <text x={i * 30 + 15} y={95 - h} fontSize="9" textAnchor="middle" className="num" fill="#263329">{v.toFixed(fmt)}</text>}
+              <rect x={i * 30 + 4} y={100 - h} width={22} height={h} fill="#3E5B4F" />
+              <text x={i * 30 + 15} y={114} fontSize="10" textAnchor="middle" fill="#3E5B4F">{months[i]}</text>
+              {v != null && <text x={i * 30 + 15} y={95 - h} fontSize="9" textAnchor="middle" className="num" fill="#172D27">{v.toFixed(fmt)}</text>}
             </g>
           );
         })}
@@ -81,7 +82,11 @@ export default function Journey({ lang }: { lang: Lang }) {
   const [cons, setCons] = useState({ seed: "", equipment: "", buyer: "" });
   const [mgmt, setMgmt] = useState({ residues: "unknown", cover: "unknown", waterlog: "unknown", runoff: "unknown", priority: "" });
   const [opt, setOpt] = useState({ area: "", costs: "" });
-  const [soil, setSoil] = useState({ fc: "", wp: "", demo: false });
+  const [soil, setSoil] = useState({ fc: "", wp: "" });
+  const [soilSource, setSoilSource] = useState<"" | "regional" | "farmer" | "demo">("");
+  const [soilProf, setSoilProf] = useState<any>(null);
+  const [soilProfState, setSoilProfState] = useState<"idle" | "loading" | "error">("idle");
+  const [blocked, setBlocked] = useState<{ seed: string[]; equip: string[]; buyer: string[] }>({ seed: [], equip: [], buyer: [] });
 
   const [run, setRun] = useState<any>(null);
   const [runState, setRunState] = useState<"idle" | "loading" | "error">("idle");
@@ -92,36 +97,107 @@ export default function Journey({ lang }: { lang: Lang }) {
   const [simRun, setSimRun] = useState<any>(null);
   const [simBusy, setSimBusy] = useState(false);
   const abort = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const chosenRef = useRef<string | null>(null);
+  const knownRef = useRef<HTMLElement>(null);
+  const [active, setActive] = useState(-1);
+  const [placeName, setPlaceName] = useState("");
+  const [flyToken, setFlyToken] = useState(0);
+  const [knownSeen, setKnownSeen] = useState(false);
+
+  const motionOff = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: motionOff() ? "auto" : "smooth", block: "start" });
+
+  async function searchNow(query: string, signal?: AbortSignal): Promise<Place[] | null> {
+    if (query.trim().length < 3) { setPlaces(null); setSearchMsg(query.trim().length ? t.minChars : ""); return null; }
+    setSearchMsg(t.searching);
+    try {
+      const r = await fetch(`${API}/api/places?q=${encodeURIComponent(query.trim())}&language=${lang}`, { signal });
+      if (r.status === 503) { setSearchMsg(t.noToken); setPlaces(null); return null; }
+      if (!r.ok) throw new Error();
+      const j = await r.json(); setPlaces(j.results); setActive(-1);
+      setSearchMsg(j.results.length ? "" : t.noResultsHelp);
+      return j.results as Place[];
+    } catch (e: any) {
+      if (e.name !== "AbortError") { setPlaces(null); setSearchMsg(t.searchErrorHelp); }
+      return null;
+    }
+  }
 
   // Search-as-you-type: debounced 350 ms, min 3 chars, stale requests cancelled
   useEffect(() => {
+    if (chosenRef.current === q) return;  // the text was filled by a confirmed locality
     if (q.length < 3) { setPlaces(null); setSearchMsg(""); return; }
     const ac = new AbortController();
-    setSearchMsg(t.searching);
-    const id = setTimeout(async () => {
-      try {
-        const r = await fetch(`${API}/api/places?q=${encodeURIComponent(q)}&language=${lang}`, { signal: ac.signal });
-        if (r.status === 503) { setSearchMsg(t.noToken); setPlaces(null); return; }
-        if (!r.ok) throw new Error();
-        const j = await r.json(); setPlaces(j.results); setSearchMsg(j.results.length ? "" : t.noResults);
-      } catch (e: any) { if (e.name !== "AbortError") setSearchMsg(t.error); }
-    }, 350);
+    const id = setTimeout(() => searchNow(q, ac.signal), 350);
     return () => { clearTimeout(id); ac.abort(); };
-  }, [q, lang, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, lang]);
 
-  function invalidate() { setProfile(null); setRun(null); setSimRun(null); setSimOn(false); setShift(0); setRain(100); }
+  // Enter / "Search": confirm the highlighted suggestion; a single match is confirmed; several show the options
+  async function onSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (places && active >= 0 && places[active]) { choose(places[active]); return; }
+    const res = await searchNow(q);
+    if (res && res.length === 1) { choose(res[0]); return; }
+    if (res && res.length > 1) { setSearchMsg(t.pickOne); return; }
+    inputRef.current?.focus();  // nothing usable: keep the focus on the search field
+  }
 
-  function confirmLocation(lat: number, lon: number, elevation?: number) {
+  function choose(p: Place) {
+    const name = p.full || p.name;
+    chosenRef.current = name; setQ(name); setPlaces(null); setActive(-1); setSearchMsg("");
+    setCoords({ lat: String(p.lat), lon: String(p.lon), elev: "" }); setPlaceName(name);
+    setFlyToken((n) => n + 1);
+    confirmLocation(p.lat, p.lon, undefined, "map");
+  }
+
+  function invalidate() { setSoilProf(null); setSoilSource(""); setProfile(null); setRun(null); setSimRun(null); setSimOn(false); setShift(0); setRain(100); }
+
+  function confirmLocation(lat: number, lon: number, elevation?: number, target: "map" | "known" = "known") {
     if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
-    invalidate(); setConfirmed({ lat, lon, elevation });
-    setTimeout(() => document.getElementById("known")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }), 50);
+    const loc = { lat, lon, elevation };
+    invalidate(); setConfirmed(loc);
+    setTimeout(() => scrollToId(target === "map" ? "map-section" : "known"), 60);
+    loadProfile(loc);  // pre-query the climate while the person looks at the map
   }
 
-  async function loadProfile() {
-    if (!confirmed) return;
+  async function loadProfile(loc?: { lat: number; lon: number; elevation?: number }) {
+    const L = loc ?? confirmed;
+    if (!L) return;
     setProfileState("loading");
-    try { setProfile(await post("/api/location-profile", { location: confirmed })); setProfileState("idle"); } catch { setProfileState("error"); }
+    try { setProfile(await post("/api/location-profile", { location: L })); setProfileState("idle"); } catch { setProfileState("error"); }
   }
+
+  function goClimate(e: React.MouseEvent) {
+    e.preventDefault();
+    scrollToId("known");
+    setTimeout(() => document.getElementById("kn")?.focus({ preventScroll: true }), motionOff() ? 0 : 450);
+  }
+
+  // The climate section fades/slides in the first time it reaches the viewport
+  useEffect(() => {
+    if (!confirmed || knownSeen) return;
+    const el = knownRef.current;
+    if (!el) return;
+    if (motionOff() || typeof IntersectionObserver === "undefined") { setKnownSeen(true); return; }
+    const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { setKnownSeen(true); io.disconnect(); } }, { threshold: 0.12 });
+    io.observe(el);
+    return () => io.disconnect();
+     
+  }, [confirmed, knownSeen]);
+
+  async function loadSoil() {
+    if (!confirmed) return;
+    setSoilProfState("loading");
+    try {
+      const j = await post("/api/soil-profile", { location: confirmed });
+      setSoilProf(j); setSoilProfState(j.status === "ok" ? "idle" : "error");
+      if (j.status === "ok" && j.hydraulics?.usable) setSoilSource("regional");
+    } catch { setSoilProfState("error"); }
+  }
+  const toggleIn = (k: "seed" | "equip" | "buyer", c: string) =>
+    setBlocked((b) => ({ ...b, [k]: b[k].includes(c) ? b[k].filter((x) => x !== c) : [...b[k], c] }));
 
   const tri = (v: string) => (v === "yes" ? true : v === "no" ? false : undefined);
   const hasMD = (x: MD) => num(x.m) != null && num(x.d) != null;
@@ -136,12 +212,14 @@ export default function Journey({ lang }: { lang: Lang }) {
       ? { startMonth: num(irrFrom.m), startDay: num(irrFrom.d) ?? 1, endMonth: num(irrTo.m), endDay: num(irrTo.d) ?? 28, applicationMm: num(irrDepth), intervalDays: num(irrEvery) }
       : undefined,
     allowedCrops: allowed, constraintNotes: cons,
+    constraints: { seedUnavailable: blocked.seed, equipmentUnsupported: blocked.equip, noBuyer: blocked.buyer },
     management: {
       residues: mgmt.residues, coverCrop: tri(mgmt.cover), waterlogging: tri(mgmt.waterlog), runoff: tri(mgmt.runoff),
       priority: mgmt.priority || undefined, areaHa: num(opt.area), ownCostsMxnPerHa: num(opt.costs),
     },
-    soil: num(soil.fc) != null && num(soil.wp) != null ? { thetaFC: num(soil.fc), thetaWP: num(soil.wp) } : undefined,
-    soilIsDemo: soil.demo,
+    soil: (soilSource === "farmer" || soilSource === "demo") && num(soil.fc) != null && num(soil.wp) != null ? { thetaFC: num(soil.fc), thetaWP: num(soil.wp) } : undefined,
+    soilIsDemo: soilSource === "demo",
+    soilSource: soilSource || undefined,
   });
 
   async function compare() {
@@ -171,40 +249,61 @@ export default function Journey({ lang }: { lang: Lang }) {
   const indName: Record<string, string> = { A: t.waterName, H: t.heat, S: t.soilC, E: t.erosion, U: t.margin };
   const signed = (d: number) => { const s = d.toFixed(1); return s === "0.0" || s === "-0.0" ? "±0.0" : d > 0 ? `+${s}` : `−${Math.abs(d).toFixed(1)}`; };
   const hasIntercrop = cycles.some((c) => c.also);
+  const reg = run?.soil?.sources?.regional;
+  const soilLine = !run ? "" : run.soil?.active === "regional"
+    ? (reg?.qualityFlags?.includes("nearest_valid_cell") ? t.soilLineRegional.replace("{m}", String(Math.round(reg.distanceM))) : t.soilLineRegionalExact)
+    : run.soil?.active === "farmer" ? t.soilLineFarmer : run.soil?.active === "demo" ? t.soilLineDemo : "";
   const toggleCrop = (c: string) => setAllowed((a) => (a.includes(c) ? a.filter((x) => x !== c) : [...a, c]));
   const winBad = hasMD(winFrom) !== hasMD(winTo);
 
   return (
     <main>
-      <header className="absolute z-10 flex w-full items-center justify-between px-6 py-4 text-sm text-[#FFFCF5]">
+      <header className="absolute z-10 flex w-full items-center justify-between px-6 py-4 text-sm text-cream">
         <span className="font-semibold tracking-wide">heirloom</span>
         <Link href={`/${other}`} className="underline" hrefLang={other}>{other.toUpperCase()}</Link>
       </header>
 
-      <section className="hero flex items-end px-6 pb-16 pt-24 md:px-[8vw]">
+      <section className="hero flex items-end px-6 pb-12 pt-24 md:px-[8vw] md:pb-16">
         <div className="w-full max-w-[1280px]">
+         <div className="hero-copy max-w-[640px]">
           <h1>{t.heroTitle}</h1>
           <p className="mt-4 max-w-xl text-lg">{t.heroSub}</p>
-          <div className="relative mt-8 max-w-xl text-ink">
-            <label htmlFor="q" className="mb-1 block text-sm text-[#FFFCF5]">{t.search}</label>
-            <input id="q" className="w-full" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" aria-controls="places" />
-            <div aria-live="polite" className="mt-1 min-h-5 text-sm text-[#FFFCF5]">{searchMsg}</div>
+          <form role="search" className="relative mt-7 max-w-xl text-ink" onSubmit={onSearchSubmit}>
+            <label htmlFor="q" className="mb-1 block text-sm text-cream">{t.search}</label>
+            <div className="flex gap-2">
+              <input id="q" ref={inputRef} className="min-w-0 flex-1" value={q} onChange={(e) => { chosenRef.current = null; setQ(e.target.value); }} autoComplete="off"
+                placeholder={t.searchEx} role="combobox" aria-expanded={!!places?.length} aria-controls="places" aria-autocomplete="list"
+                aria-activedescendant={active >= 0 ? `place-${active}` : undefined}
+                onKeyDown={(e) => {
+                  if (!places?.length) return;
+                  if (e.key === "ArrowDown") { e.preventDefault(); setActive((i) => (i + 1) % places.length); }
+                  else if (e.key === "ArrowUp") { e.preventDefault(); setActive((i) => (i <= 0 ? places.length - 1 : i - 1)); }
+                  else if (e.key === "Escape") { setPlaces(null); setActive(-1); }
+                }} />
+              <button type="submit" className="btn accent hero-search">{t.searchBtn}</button>
+            </div>
+            <div aria-live="polite" className="mt-1 min-h-5 text-sm text-cream">{searchMsg}</div>
             {places && places.length > 0 && (
-              <ul id="places" className="panel absolute left-0 right-0 z-20 mt-1 max-h-64 list-none overflow-auto p-0 shadow-md">
+              <ul id="places" role="listbox" className="panel absolute left-0 right-0 z-20 mt-1 max-h-64 list-none overflow-auto p-0 shadow-md">
                 {places.map((p, i) => (
-                  <li key={i}><button className="min-h-[44px] w-full px-3 text-left" onClick={() => { setCoords({ lat: String(p.lat), lon: String(p.lon), elev: "" }); setPlaces(null); }}>{p.full || p.name}</button></li>
+                  <li key={i} id={`place-${i}`} role="option" aria-selected={i === active} className="opt flex min-h-[44px] cursor-pointer items-center px-3"
+                    onMouseEnter={() => setActive(i)} onClick={() => choose(p)}>{p.full || p.name}</li>
                 ))}
               </ul>
             )}
-          </div>
+          </form>
+         </div>
         </div>
+        <span className="hero-caption">{t.illusShort}</span>
       </section>
 
       <div className="mx-auto max-w-[1280px] px-6 py-16 md:px-10">
-        <section aria-labelledby="loc" className="panel p-6">
+        <section id="map-section" aria-labelledby="loc" className="panel scroll-mt-4 p-6">
           <h2 id="loc" className="text-2xl font-semibold">{t.placeMap}</h2>
+          {placeName && <p className="mt-1 font-semibold" aria-live="polite">{t.placeConfirmed}: {placeName}</p>}
           <div className="mt-2"><MapPicker lat={isFinite(parseFloat(coords.lat)) ? parseFloat(coords.lat) : null} lon={isFinite(parseFloat(coords.lon)) ? parseFloat(coords.lon) : null}
-            onChange={(la, lo) => setCoords((c) => ({ ...c, lat: la.toFixed(5), lon: lo.toFixed(5) }))} unavailableText={t.mapUnavailable} failedText={t.mapFailed} /></div>
+            onChange={(la, lo) => setCoords((c) => ({ ...c, lat: la.toFixed(5), lon: lo.toFixed(5) }))} unavailableText={t.mapUnavailable} failedText={t.mapFailed} flyToken={flyToken} /></div>
+          {confirmed && <p className="mt-3"><a href="#known" className="font-medium underline" onClick={goClimate}>{t.seeClimate} ↓</a></p>}
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {(["lat", "lon", "elev"] as const).map((k) => (
               <label key={k} className="flex flex-col text-sm">{t[k]}
@@ -215,17 +314,17 @@ export default function Journey({ lang }: { lang: Lang }) {
           <p className="tag mt-2">{t.pointNote}</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button className="btn" onClick={() => confirmLocation(Number(coords.lat), Number(coords.lon), coords.elev ? Number(coords.elev) : undefined)}>{t.useLoc}</button>
-            <button className="btn ghost" onClick={() => setCoords({ lat: "17.432993", lon: "-95.02336", elev: "" })}>{t.pilot}</button>
+            <button className="btn ghost" onClick={() => { setCoords({ lat: "17.432993", lon: "-95.02336", elev: "" }); setCycles([{ crop: "maize", also: "", approx: "" }, { crop: "bean", also: "", approx: "" }, { crop: "maize", also: "", approx: "" }]); setUsual({ m: "6", d: "15" }); }}>{t.pilot}</button>
           </div>
           <p className="tag mt-1">{t.pilotNote}</p>
         </section>
 
         {confirmed && (
-          <section id="known" aria-labelledby="kn" className="panel mt-10 p-6">
-            <h2 id="kn" className="text-2xl font-semibold">{t.known}</h2>
+          <section id="known" ref={knownRef} aria-labelledby="kn" className={`panel reveal mt-10 scroll-mt-4 p-6${knownSeen ? " in" : ""}`}>
+            <h2 id="kn" tabIndex={-1} className="text-2xl font-semibold outline-offset-4">{t.known}</h2>
             <p className="num tag">{confirmed.lat.toFixed(4)}, {confirmed.lon.toFixed(4)}</p>
-            {!profile && <button className="btn mt-3" onClick={loadProfile} disabled={profileState === "loading"}>{profileState === "loading" ? t.loading : t.seeData}</button>}
-            {profileState === "error" && <p role="alert" className="risk mt-2">{t.apiDown} <button className="underline" onClick={loadProfile}>{t.retry}</button></p>}
+            {!profile && <button className="btn mt-3" onClick={() => loadProfile()} disabled={profileState === "loading"}>{profileState === "loading" ? t.loading : t.seeData}</button>}
+            {profileState === "error" && <p role="alert" className="risk mt-2">{t.apiDown} <button className="underline" onClick={() => loadProfile()}>{t.retry}</button></p>}
             {profile && (
               <>
                 <p className="tag mt-2">{t.histNote} ({profile.period[0]}–{profile.period[1]})</p>
@@ -312,6 +411,16 @@ export default function Journey({ lang }: { lang: Lang }) {
                   <label key={c} className="flex min-h-[44px] items-center gap-2"><input type="checkbox" checked={allowed.includes(c)} onChange={() => toggleCrop(c)} className="!min-h-0" />{cropLabel(c)}</label>
                 ))}
               </div>
+              <div className="mt-3 space-y-1">
+                {([["seed", t.seedNo], ["equip", t.equipNo], ["buyer", t.buyerNo]] as const).map(([k, l]) => (
+                  <div key={k} className="flex flex-wrap items-center gap-4"><span className="text-sm">{l}</span>
+                    {(["maize", "bean"] as const).map((c) => (
+                      <label key={c} className="flex min-h-[44px] items-center gap-2 text-sm"><input type="checkbox" checked={blocked[k].includes(c)} onChange={() => toggleIn(k, c)} className="!min-h-0" />{cropLabel(c)}</label>
+                    ))}
+                  </div>
+                ))}
+                <p className="tag">{t.constraintsNote}</p>
+              </div>
               <div className="mt-2 flex flex-wrap gap-3">
                 {(["seed", "equipment", "buyer"] as const).map((k) => (
                   <label key={k} className="flex flex-col text-sm">{t[k]}<input value={cons[k]} onChange={(e) => setCons({ ...cons, [k]: e.target.value })} /></label>
@@ -345,19 +454,56 @@ export default function Journey({ lang }: { lang: Lang }) {
               </details>
             </fieldset>
 
-            <details className="mt-8 border-t border-line pt-4">
+            <details className="mt-8 border-t border-line pt-4" open>
               <summary className="cursor-pointer text-lg font-semibold">{t.soilTech}</summary>
               <p className="tag mt-2">{t.soilHelp}</p>
-              <div className="mt-2 flex flex-wrap gap-3">
-                <label className="flex flex-col text-sm">{t.fc}<input inputMode="decimal" value={soil.fc} onChange={(e) => setSoil({ fc: e.target.value, wp: soil.wp, demo: false })} placeholder={t.unknown} /></label>
-                <label className="flex flex-col text-sm">{t.wp}<input inputMode="decimal" value={soil.wp} onChange={(e) => setSoil({ fc: soil.fc, wp: e.target.value, demo: false })} placeholder={t.unknown} /></label>
+              <p className="mt-3 font-semibold">{t.soilSourceTitle}</p>
+              <div className="mt-1 flex flex-col gap-1">
+                {([["regional", t.srcRegional], ["farmer", t.srcFarmer], ["demo", t.srcDemo]] as const).map(([v, l]) => (
+                  <label key={v} className="flex min-h-[44px] items-center gap-2">
+                    <input type="radio" name="soilsrc" className="!min-h-0" checked={soilSource === v}
+                      disabled={v === "regional" && !(soilProf?.status === "ok" && soilProf?.hydraulics?.usable)}
+                      onChange={() => { setSoilSource(v); if (v === "demo") setSoil({ fc: "0.30", wp: "0.15" }); }} />{l}
+                  </label>
+                ))}
               </div>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <button className="btn ghost" onClick={() => setSoil({ fc: "0.30", wp: "0.15", demo: true })}>{t.useDemo}</button>
-                <button className="btn ghost" onClick={() => setSoil({ fc: "", wp: "", demo: false })}>{t.unknown}</button>
+
+              <div className="mt-3 border-t border-line pt-3">
+                <button className="btn ghost" onClick={loadSoil} disabled={soilProfState === "loading"}>{soilProfState === "loading" ? t.regionalLoading : soilProfState === "error" ? t.regionalRetry : t.regionalBtn}</button>
+                {soilProfState === "error" && <p role="alert" className="risk mt-2 text-sm">{t.regionalErr} {soilProf?.qualityFlags?.includes("api_timeout") ? t.regionalTimeout : soilProf?.reason ? E(soilProf.reason) : ""}</p>}
+                {!(soilProf?.status === "ok" && soilProf?.hydraulics?.usable) && soilProfState !== "error" && <p className="tag mt-1">{t.regionalFirst}</p>}
+                {soilProf?.status === "ok" && (
+                  <div className="mt-2">
+                    <p className="tag">{t.regionalNote} SoilGrids 2.0 · {soilProf.manifest?.license}</p>
+                    {soilProf.qualityFlags?.includes("nearest_valid_cell") && <p className="risk text-sm" role="note">{t.nearestCell.replace("{m}", String(Math.round(soilProf.distanceM)))}</p>}
+                    <div className="overflow-x-auto">
+                      <table className="num tag mt-1 w-full min-w-[560px] text-left">
+                        <thead><tr><th>{t.depth}</th><th>{t.clay} ({t.range90})</th><th>{t.sand}</th><th>{t.soc}</th><th>{t.fcShort}</th><th>{t.wpShort}</th></tr></thead>
+                        <tbody>
+                          {soilProf.layers.map((L: any, i: number) => {
+                            const H = soilProf.hydraulics?.layers?.[i];
+                            return (<tr key={L.label}><td>{L.label}</td>
+                              <td>{L.clay_pct?.toFixed(1)} ({L.clay_pct_q05?.toFixed(0)}–{L.clay_pct_q95?.toFixed(0)})</td>
+                              <td>{L.sand_pct?.toFixed(1)}</td><td>{L.soc_g_kg?.toFixed(1)}</td>
+                              <td>{H ? H.fc.toFixed(3) : "—"}</td><td>{H ? H.wp.toFixed(3) : "—"}</td></tr>);
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="tag mt-1">{t.ptfNote}</p>
+                    {!soilProf.hydraulics?.usable && <p className="risk text-sm">{t.regionalBlocked}: {soilProf.hydraulics?.issues?.join("; ")}</p>}
+                  </div>
+                )}
               </div>
-              {soil.demo && <p className="tag mt-2" role="note">{t.demoTag}</p>}
-              {num(soil.fc) == null || num(soil.wp) == null ? <p className="risk mt-2 text-sm">{t.soilNeed}</p> : null}
+
+              <div className="mt-3 flex flex-wrap gap-3 border-t border-line pt-3">
+                <label className="flex flex-col text-sm">{t.fc}<input inputMode="decimal" value={soil.fc} disabled={soilSource === "regional"} onChange={(e) => { setSoil({ ...soil, fc: e.target.value }); setSoilSource("farmer"); }} placeholder={t.unknown} /></label>
+                <label className="flex flex-col text-sm">{t.wp}<input inputMode="decimal" value={soil.wp} disabled={soilSource === "regional"} onChange={(e) => { setSoil({ ...soil, wp: e.target.value }); setSoilSource("farmer"); }} placeholder={t.unknown} /></label>
+                <button className="btn ghost self-end" disabled={soilSource === "regional"} onClick={() => { setSoil({ fc: "", wp: "" }); setSoilSource(""); }}>{t.unknown}</button>
+              </div>
+              {soilSource === "regional" && <p className="tag mt-1" role="note">{t.soilFieldsLocked}</p>}
+              {soilSource === "demo" && <p className="tag mt-2" role="note">{t.demoTag}</p>}
+              {!soilSource && <p className="risk mt-2 text-sm">{t.soilNeed}</p>}
             </details>
 
             <button className="btn mt-6" onClick={compare} disabled={runState === "loading" || winBad}>{runState === "loading" ? t.computing : t.compute}</button>
@@ -381,17 +527,17 @@ export default function Journey({ lang }: { lang: Lang }) {
                 const A = adjusted ? sc : base;
                 return (
                   <article key={r.id} className="panel p-5">
-                    <h3 className="text-xl font-semibold">{label(r, i)}{r.structure === "monoculture" && <span className="ml-2 border border-ink px-2 py-0.5 align-middle text-sm font-normal">{t.monoculture}</span>}</h3>
+                    <h3 className="text-xl font-semibold">{label(r, i)}{r.structure && <span className="ml-2 border border-ink px-2 py-0.5 align-middle text-sm font-normal">{r.structure === "monoculture" ? t.monoculture : r.structure === "intercrop" ? t.structIntercrop : t.structRotation}</span>}</h3>
                     {r.sequence ? (
                       <div className="mt-2 flex gap-1" role="img" aria-label={r.sequence.map(cropLabel).join(" → ")}>
                         {r.sequence.map((c: string, j: number) => (
-                          <div key={j} className="flex-1 border border-line bg-[#E8E5D6] px-2 py-1 text-sm">{`${j + 1} · ${cropLabel(c)}`}</div>
+                          <div key={j} className="flex-1 border border-line bg-[#EDE6D3] px-2 py-1 text-sm">{`${j + 1} · ${cropLabel(c)}`}</div>
                         ))}
                       </div>
                     ) : (
                       <div className="mt-2 flex gap-1" aria-label={t.hist}>
                         {r.history.map((h: any, j: number) => (
-                          <div key={j} className="flex-1 border border-line bg-[#E8E5D6] px-2 py-1 text-sm">{`${j + 1} · ${h.crops.map(cropLabel).join(" + ")}`}</div>
+                          <div key={j} className="flex-1 border border-line bg-[#EDE6D3] px-2 py-1 text-sm">{`${j + 1} · ${h.crops.map(cropLabel).join(" + ")}`}</div>
                         ))}
                       </div>
                     )}
@@ -402,6 +548,7 @@ export default function Journey({ lang }: { lang: Lang }) {
                         <span className="tag"> · P10–P90 {S.p10.toFixed(1)}–{S.p90.toFixed(1)} · {S.validBlocks}/{S.totalBlocks} {t.valid}{adjusted ? ` · ${t.scenarioPct}` : ""}</span></>
                         : <span>{t.pending}</span>}
                     </p>
+                    {S && soilLine && <p className="tag">{soilLine}</p>}
                     {adjusted && d === 0 && S.medianA >= 99.95 && <p className="tag">{t.ceiling}</p>}
                     {A.status === "conditional" && <p className="risk text-sm">{t.conditional}</p>}
                     {A.conditions?.length > 0 && <ul className="tag list-disc pl-5">{A.conditions.map((c: string) => <li key={c}>{E(c)}</li>)}</ul>}
@@ -411,19 +558,47 @@ export default function Journey({ lang }: { lang: Lang }) {
 
                     <ul className="tag mt-2 list-none p-0">
                       {(run.explanationOrder as string[]).filter((k) => k !== "A").map((k) => (
-                        <li key={k}><strong>{indName[k]}:</strong> {t.pending}
-                          <details className="inline"><summary className="inline cursor-pointer">{t.falta}</summary>
+                        <li key={k}><strong>{indName[k]}:</strong> {t.pending}.{" "}
+                          <details className="inline"><summary className="inline cursor-pointer underline">{t.whatMissing}</summary>
                             <ul className="list-disc pl-5">{r.indicators[k].missing.map((m: any) => <li key={m.item}>{kind(m.kind)}: {E(m.item)}{m.note ? ` — ${E(m.note)}` : ""}</li>)}</ul>
                           </details></li>
                       ))}
                     </ul>
-                    <p className="risk mt-2 text-sm">{t.overallMissing}</p>
+                    <p className="risk mt-2 text-sm">{t.overallMissing}{r.overall?.missing?.length ? `: ${t.missingIndicators} ${r.overall.missing.map((k: string) => (t as any)["ind" + k]).join(", ")}` : ""}</p>
                   </article>
                 );
               })}
             </div>
             <p className="tag mt-2">{t.range}</p>
-            {run.viableCrops?.alternativesLimit?.length > 0 && <p className="tag"><strong>{t.altLimit}:</strong> {run.viableCrops.alternativesLimit.map((x: string) => E(x)).join(" ")}</p>}
+            {(() => {
+              const notes: any[] = run.screening?.notes ?? [];
+              const altCount = run.rotations.length - 1;
+              const limits = altCount < 2 ? notes.filter((n) => n.code !== "intercrop_current") : [];
+              const inter = notes.filter((n) => n.code === "intercrop_current");
+              return (<>
+                {limits.length > 0 && <p className="tag"><strong>{t.altLimit}:</strong> {limits.map((n) => reasonText(lang, n.code, n.params)).join(" ")}</p>}
+                {inter.length > 0 && <p className="tag">{inter.map((n) => reasonText(lang, n.code, n.params)).join(" ")}</p>}
+              </>);
+            })()}
+            <p className="tag"><strong>{t.soilUsed}:</strong> {run.soil?.active === "regional" ? t.srcRegional : run.soil?.active === "farmer" ? t.srcFarmer : run.soil?.active === "demo" ? t.srcDemo : t.soilUsedNone}</p>
+            <p className="tag">{t.ksNote}</p>
+            <details className="panel mt-3 p-4">
+              <summary className="cursor-pointer font-semibold">{t.screeningTitle}</summary>
+              <p className="tag mt-2">{t.reviewedNote}</p>
+              <ul className="mt-2 list-none space-y-3 p-0">
+                {run.screening.candidates.map((c: any) => (
+                  <li key={c.sequence.join("-")} className="border-t border-line pt-2">
+                    <strong>{c.sequence.map(cropLabel).join(" → ")}</strong>{" "}
+                    <span className="border border-ink px-1 text-sm">{c.decision === "selected" ? t.decSelected : c.decision === "admitted_not_selected" ? t.decAdmitted : t.decDiscarded}</span>
+                    <ul className="tag list-none p-0">
+                      {c.checks.map((k: any, j: number) => (
+                        <li key={j}>{k.status === "met" ? "✓" : k.status === "failed" ? "✗" : "–"} <em>{k.status === "met" ? t.stMet : k.status === "failed" ? t.stFailed : t.stNot}</em>: {reasonText(lang, k.code, k.params)}</li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </details>
             {mgmtOrderNote(run, t)}
 
             <div className="panel mt-6 p-5">

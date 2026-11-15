@@ -1,7 +1,7 @@
 {
-  "runId": "e9576374-96e1-4542-8235-154866396e16",
-  "createdUtc": "2026-11-15T00:15:35.135546+00:00",
-  "engineVersion": "0.3.0",
+  "runId": "fdc81e3d-007a-4a06-bade-071d485be86c",
+  "createdUtc": "2026-11-15T00:53:08.502617+00:00",
+  "engineVersion": "0.4.0",
   "catalogVersion": "0.2.0-pilot",
   "mode": "real",
   "request": {
@@ -42,6 +42,11 @@
     "waterRegime": "rainfed",
     "irrigation": null,
     "allowedCrops": null,
+    "constraints": {
+      "seedUnavailable": [],
+      "equipmentUnsupported": [],
+      "noBuyer": []
+    },
     "constraintNotes": {},
     "management": {
       "residues": "unknown",
@@ -59,16 +64,18 @@
       "rootDepthM": null
     },
     "soilIsDemo": true,
+    "soilSource": null,
     "initialDepletionFraction": 0.5,
+    "ksTiming": "previous_day",
     "plantShiftDays": 0,
     "precipScale": 0.8
   },
-  "inputHash": "f14624198a6ecf852e8975bef2ea1e2692b49b4d6f23b42a47bc7ad81df481b0",
+  "inputHash": "b4809c4bee4531dffb222b613e845a9bbf126d30e4b169354a83b4cdece0d04d",
   "sources": [
     {
       "url": "https://power.larc.nasa.gov/api/temporal/daily/point?latitude=17.432993&longitude=-95.02336&start=20050101&end=20091231&community=AG&parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CT2MDEW%2CRH2M%2CWS2M%2CPS%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&format=JSON&time-standard=UTC",
-      "retrievedAt": "2026-11-15T00:15:29.775470+00:00",
-      "sha256": "cd24acbfb99fd1238deeb97a12f9be829e12f80328f471b955575fc6ac5cc1d9",
+      "retrievedAt": "2026-11-15T00:53:03.747141+00:00",
+      "sha256": "868e725c45c5b8a7dae4b5455bf6059e6d838ea6bb3c55aa93f93ce79c63f012",
       "apiVersion": "v2.10.3",
       "fillValue": -999.0,
       "units": {
@@ -92,8 +99,8 @@
     },
     {
       "url": "https://power.larc.nasa.gov/api/temporal/daily/point?latitude=17.432993&longitude=-95.02336&start=20100101&end=20141231&community=AG&parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CT2MDEW%2CRH2M%2CWS2M%2CPS%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&format=JSON&time-standard=UTC",
-      "retrievedAt": "2026-11-15T00:15:31.221012+00:00",
-      "sha256": "6444a156b62c338b9e8b727e9db3d6bc703cb9f34d342e3cd805c7daac6965b1",
+      "retrievedAt": "2026-11-15T00:53:05.217257+00:00",
+      "sha256": "d19ca5cdbd780e82ee80ff06969f48f17640188c812472a91c8b6a85fe3dd77f",
       "apiVersion": "v2.10.3",
       "fillValue": -999.0,
       "units": {
@@ -117,8 +124,8 @@
     },
     {
       "url": "https://power.larc.nasa.gov/api/temporal/daily/point?latitude=17.432993&longitude=-95.02336&start=20150101&end=20191231&community=AG&parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CT2MDEW%2CRH2M%2CWS2M%2CPS%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&format=JSON&time-standard=UTC",
-      "retrievedAt": "2026-11-15T00:15:33.754967+00:00",
-      "sha256": "cd82c24ba5c0b9680611920fb253ca0a8ff85b991d4e7adb0c38bdd4b79b433e",
+      "retrievedAt": "2026-11-15T00:53:06.213955+00:00",
+      "sha256": "03394de4026f1afdcc1e1c0da1a219227a1f0647cf0d7527bdb31a642c5049ad",
       "apiVersion": "v2.10.3",
       "fillValue": -999.0,
       "units": {
@@ -142,8 +149,8 @@
     },
     {
       "url": "https://power.larc.nasa.gov/api/temporal/daily/point?latitude=17.432993&longitude=-95.02336&start=20200101&end=20241231&community=AG&parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CT2MDEW%2CRH2M%2CWS2M%2CPS%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&format=JSON&time-standard=UTC",
-      "retrievedAt": "2026-11-15T00:15:34.834453+00:00",
-      "sha256": "f00e7428ff0d4047b091f04072c32b8c3ea67eb575e132ede274bd3a1653fdea",
+      "retrievedAt": "2026-11-15T00:53:08.223390+00:00",
+      "sha256": "eb8bafe1aceda360d6a7ad16f7fc5c99423c517793e404e6b6fc9fc32c314eef",
       "apiVersion": "v2.10.3",
       "fillValue": -999.0,
       "units": {
@@ -221,20 +228,556 @@
     ],
     "missing": []
   },
+  "waterBalance": {
+    "ksTiming": "previous_day",
+    "order": [
+      "scenario rainfall factor applied to P",
+      "Ks from the depletion at the end of the previous day (previous_day) or after same-day wetting (after_wetting)",
+      "inflow Q = P - RO + I + CR enters the store; drainage DP = excess over TAW",
+      "ETa = min(available water, Ks x ETm); depletion updated"
+    ]
+  },
   "soil": {
-    "given": {
-      "thetaFC": 0.3,
-      "thetaWP": 0.15
+    "sources": {
+      "farmer": null,
+      "regional": null,
+      "demo": {
+        "thetaFC": 0.3,
+        "thetaWP": 0.15,
+        "awcMmPerM": 150.0,
+        "rootDepthM": null,
+        "sourceType": "demo_assumption"
+      }
     },
+    "active": "demo",
+    "requestedSource": "demo",
+    "regionalMissing": [],
     "isDemoAssumption": true,
-    "awcMmPerM": 150.0
+    "unavailableReason": null
+  },
+  "screening": {
+    "candidates": [
+      {
+        "sequence": [
+          "bean",
+          "maize",
+          "bean"
+        ],
+        "structure": "rotation",
+        "checks": [
+          {
+            "check": "availability",
+            "status": "met",
+            "code": "all_crops_available",
+            "params": {
+              "crops": [
+                "bean",
+                "maize"
+              ]
+            }
+          },
+          {
+            "check": "window",
+            "status": "met",
+            "code": "no_window_all_viable",
+            "params": {}
+          },
+          {
+            "check": "overlap",
+            "status": "met",
+            "code": "no_overlap",
+            "params": {
+              "minGapDays": 240
+            }
+          },
+          {
+            "check": "structure",
+            "status": "met",
+            "code": "rotation",
+            "params": {}
+          },
+          {
+            "check": "water",
+            "status": "not_evaluated",
+            "code": "water_rule_missing",
+            "params": {}
+          },
+          {
+            "check": "family_pests",
+            "status": "not_evaluated",
+            "code": "family_pest_rule_missing",
+            "params": {
+              "families": [
+                "Fabaceae",
+                "Poaceae",
+                "Fabaceae"
+              ]
+            }
+          }
+        ],
+        "admitted": true,
+        "rank": 1,
+        "decision": "selected"
+      },
+      {
+        "sequence": [
+          "bean",
+          "maize",
+          "maize"
+        ],
+        "structure": "rotation",
+        "checks": [
+          {
+            "check": "availability",
+            "status": "met",
+            "code": "all_crops_available",
+            "params": {
+              "crops": [
+                "bean",
+                "maize"
+              ]
+            }
+          },
+          {
+            "check": "window",
+            "status": "met",
+            "code": "no_window_all_viable",
+            "params": {}
+          },
+          {
+            "check": "overlap",
+            "status": "met",
+            "code": "no_overlap",
+            "params": {
+              "minGapDays": 240
+            }
+          },
+          {
+            "check": "structure",
+            "status": "met",
+            "code": "rotation",
+            "params": {}
+          },
+          {
+            "check": "water",
+            "status": "not_evaluated",
+            "code": "water_rule_missing",
+            "params": {}
+          },
+          {
+            "check": "family_pests",
+            "status": "not_evaluated",
+            "code": "family_pest_rule_missing",
+            "params": {
+              "families": [
+                "Fabaceae",
+                "Poaceae",
+                "Poaceae"
+              ]
+            }
+          }
+        ],
+        "admitted": true,
+        "rank": 2,
+        "decision": "selected"
+      },
+      {
+        "sequence": [
+          "maize",
+          "maize",
+          "bean"
+        ],
+        "structure": "rotation",
+        "checks": [
+          {
+            "check": "availability",
+            "status": "met",
+            "code": "all_crops_available",
+            "params": {
+              "crops": [
+                "bean",
+                "maize"
+              ]
+            }
+          },
+          {
+            "check": "window",
+            "status": "met",
+            "code": "no_window_all_viable",
+            "params": {}
+          },
+          {
+            "check": "overlap",
+            "status": "met",
+            "code": "no_overlap",
+            "params": {
+              "minGapDays": 240
+            }
+          },
+          {
+            "check": "structure",
+            "status": "met",
+            "code": "rotation",
+            "params": {}
+          },
+          {
+            "check": "water",
+            "status": "not_evaluated",
+            "code": "water_rule_missing",
+            "params": {}
+          },
+          {
+            "check": "family_pests",
+            "status": "not_evaluated",
+            "code": "family_pest_rule_missing",
+            "params": {
+              "families": [
+                "Poaceae",
+                "Poaceae",
+                "Fabaceae"
+              ]
+            }
+          }
+        ],
+        "admitted": true,
+        "rank": 3,
+        "decision": "admitted_not_selected"
+      },
+      {
+        "sequence": [
+          "bean",
+          "bean",
+          "maize"
+        ],
+        "structure": "rotation",
+        "checks": [
+          {
+            "check": "availability",
+            "status": "met",
+            "code": "all_crops_available",
+            "params": {
+              "crops": [
+                "bean",
+                "maize"
+              ]
+            }
+          },
+          {
+            "check": "window",
+            "status": "met",
+            "code": "no_window_all_viable",
+            "params": {}
+          },
+          {
+            "check": "overlap",
+            "status": "met",
+            "code": "no_overlap",
+            "params": {
+              "minGapDays": 255
+            }
+          },
+          {
+            "check": "structure",
+            "status": "met",
+            "code": "rotation",
+            "params": {}
+          },
+          {
+            "check": "water",
+            "status": "not_evaluated",
+            "code": "water_rule_missing",
+            "params": {}
+          },
+          {
+            "check": "family_pests",
+            "status": "not_evaluated",
+            "code": "family_pest_rule_missing",
+            "params": {
+              "families": [
+                "Fabaceae",
+                "Fabaceae",
+                "Poaceae"
+              ]
+            }
+          }
+        ],
+        "admitted": true,
+        "rank": 4,
+        "decision": "admitted_not_selected"
+      },
+      {
+        "sequence": [
+          "maize",
+          "bean",
+          "bean"
+        ],
+        "structure": "rotation",
+        "checks": [
+          {
+            "check": "availability",
+            "status": "met",
+            "code": "all_crops_available",
+            "params": {
+              "crops": [
+                "bean",
+                "maize"
+              ]
+            }
+          },
+          {
+            "check": "window",
+            "status": "met",
+            "code": "no_window_all_viable",
+            "params": {}
+          },
+          {
+            "check": "overlap",
+            "status": "met",
+            "code": "no_overlap",
+            "params": {
+              "minGapDays": 240
+            }
+          },
+          {
+            "check": "structure",
+            "status": "met",
+            "code": "rotation",
+            "params": {}
+          },
+          {
+            "check": "water",
+            "status": "not_evaluated",
+            "code": "water_rule_missing",
+            "params": {}
+          },
+          {
+            "check": "family_pests",
+            "status": "not_evaluated",
+            "code": "family_pest_rule_missing",
+            "params": {
+              "families": [
+                "Poaceae",
+                "Fabaceae",
+                "Fabaceae"
+              ]
+            }
+          }
+        ],
+        "admitted": true,
+        "rank": 5,
+        "decision": "admitted_not_selected"
+      },
+      {
+        "sequence": [
+          "bean",
+          "bean",
+          "bean"
+        ],
+        "structure": "monoculture",
+        "checks": [
+          {
+            "check": "availability",
+            "status": "met",
+            "code": "all_crops_available",
+            "params": {
+              "crops": [
+                "bean"
+              ]
+            }
+          },
+          {
+            "check": "window",
+            "status": "met",
+            "code": "no_window_all_viable",
+            "params": {}
+          },
+          {
+            "check": "overlap",
+            "status": "met",
+            "code": "no_overlap",
+            "params": {
+              "minGapDays": 255
+            }
+          },
+          {
+            "check": "structure",
+            "status": "failed",
+            "code": "monoculture_when_rotation_possible",
+            "params": {}
+          },
+          {
+            "check": "water",
+            "status": "not_evaluated",
+            "code": "water_rule_missing",
+            "params": {}
+          },
+          {
+            "check": "family_pests",
+            "status": "not_evaluated",
+            "code": "family_pest_rule_missing",
+            "params": {
+              "families": [
+                "Fabaceae",
+                "Fabaceae",
+                "Fabaceae"
+              ]
+            }
+          }
+        ],
+        "admitted": false,
+        "decision": "discarded"
+      },
+      {
+        "sequence": [
+          "maize",
+          "maize",
+          "maize"
+        ],
+        "structure": "monoculture",
+        "checks": [
+          {
+            "check": "availability",
+            "status": "met",
+            "code": "all_crops_available",
+            "params": {
+              "crops": [
+                "maize"
+              ]
+            }
+          },
+          {
+            "check": "window",
+            "status": "met",
+            "code": "no_window_all_viable",
+            "params": {}
+          },
+          {
+            "check": "overlap",
+            "status": "met",
+            "code": "no_overlap",
+            "params": {
+              "minGapDays": 240
+            }
+          },
+          {
+            "check": "structure",
+            "status": "failed",
+            "code": "monoculture_when_rotation_possible",
+            "params": {}
+          },
+          {
+            "check": "water",
+            "status": "not_evaluated",
+            "code": "water_rule_missing",
+            "params": {}
+          },
+          {
+            "check": "family_pests",
+            "status": "not_evaluated",
+            "code": "family_pest_rule_missing",
+            "params": {
+              "families": [
+                "Poaceae",
+                "Poaceae",
+                "Poaceae"
+              ]
+            }
+          }
+        ],
+        "admitted": false,
+        "decision": "discarded"
+      }
+    ],
+    "selected": [
+      [
+        "bean",
+        "maize",
+        "bean"
+      ],
+      [
+        "bean",
+        "maize",
+        "maize"
+      ]
+    ],
+    "blockedCrops": {},
+    "notes": [],
+    "reviewed": [
+      "availability",
+      "window",
+      "overlap",
+      "structure"
+    ],
+    "notEvaluated": [
+      "water",
+      "family_pests"
+    ],
+    "current": {
+      "sequence": [
+        "maize",
+        "bean",
+        "maize"
+      ],
+      "checks": [
+        {
+          "check": "availability",
+          "status": "met",
+          "code": "all_crops_available",
+          "params": {
+            "crops": [
+              "bean",
+              "maize"
+            ]
+          }
+        },
+        {
+          "check": "window",
+          "status": "met",
+          "code": "no_window_all_viable",
+          "params": {}
+        },
+        {
+          "check": "overlap",
+          "status": "met",
+          "code": "no_overlap",
+          "params": {
+            "minGapDays": 240
+          }
+        },
+        {
+          "check": "structure",
+          "status": "met",
+          "code": "rotation",
+          "params": {}
+        },
+        {
+          "check": "water",
+          "status": "not_evaluated",
+          "code": "water_rule_missing",
+          "params": {}
+        },
+        {
+          "check": "family_pests",
+          "status": "not_evaluated",
+          "code": "family_pest_rule_missing",
+          "params": {
+            "families": [
+              "Poaceae",
+              "Fabaceae",
+              "Poaceae"
+            ]
+          }
+        }
+      ]
+    }
   },
   "viableCrops": {
     "allowed": [
       "bean",
       "maize"
     ],
-    "alternativesLimit": []
+    "blocked": {},
+    "notes": []
   },
   "explanationOrder": [
     "A",
@@ -279,6 +822,7 @@
       "indicators": {
         "H": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "data",
@@ -295,6 +839,7 @@
         },
         "S": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "model",
@@ -304,7 +849,7 @@
             {
               "kind": "data",
               "item": "Soil organic carbon, bulk density, coarse fragments, clay by layer",
-              "note": "SoilGrids rasters not downloaded"
+              "note": "SoilGrids profile now available for the pilot point; RothC inputs still missing"
             },
             {
               "kind": "data",
@@ -316,6 +861,7 @@
         },
         "E": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "data",
@@ -337,6 +883,7 @@
         },
         "U": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "data",
@@ -358,6 +905,7 @@
         },
         "A": {
           "status": "provisional",
+          "score": 99.9569816036936,
           "missing": [],
           "conditions": [
             "Rainfed confirmed: irrigation = 0 mm",
@@ -388,6 +936,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -412,6 +962,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -436,6 +988,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -451,9 +1005,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.8392767345960396,
                   "pUsed": 0.7164289306161584,
+                  "drForKsMm": 75.0,
+                  "ks": 1.0,
                   "etaMm": 0.8392767345960396,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 75.0,
                   "drEndMm": 43.695276734596035
                 },
@@ -464,9 +1019,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.7247578543393627,
                   "pUsed": 0.7210096858264256,
+                  "drForKsMm": 43.695276734596035,
+                  "ks": 1.0,
                   "etaMm": 0.7247578543393627,
                   "dpMm": 17.360723265403976,
-                  "ks": 1.0,
                   "drStartMm": 43.695276734596035,
                   "drEndMm": 0.7247578543393729
                 },
@@ -477,9 +1033,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.2820206481737346,
                   "pUsed": 0.6987191740730507,
+                  "drForKsMm": 0.7247578543393729,
+                  "ks": 1.0,
                   "etaMm": 1.2820206481737346,
                   "dpMm": 3.0032421456606357,
-                  "ks": 1.0,
                   "drStartMm": 0.7247578543393729,
                   "drEndMm": 1.2820206481737273
                 },
@@ -490,9 +1047,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.4204261031664915,
                   "pUsed": 0.6931829558733404,
+                  "drForKsMm": 1.2820206481737273,
+                  "ks": 1.0,
                   "etaMm": 1.4204261031664915,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 1.2820206481737273,
                   "drEndMm": 1.4464467513402326
                 },
@@ -503,9 +1061,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.032557619083495,
                   "pUsed": 0.7086976952366603,
+                  "drForKsMm": 1.4464467513402326,
+                  "ks": 1.0,
                   "etaMm": 1.032557619083495,
                   "dpMm": 5.673553248659772,
-                  "ks": 1.0,
                   "drStartMm": 1.4464467513402326,
                   "drEndMm": 1.0325576190834909
                 },
@@ -516,9 +1075,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.8074149482102025,
                   "pUsed": 0.717703402071592,
+                  "drForKsMm": 1.0325576190834909,
+                  "ks": 1.0,
                   "etaMm": 0.8074149482102025,
                   "dpMm": 23.103442380916505,
-                  "ks": 1.0,
                   "drStartMm": 1.0325576190834909,
                   "drEndMm": 0.8074149482102086
                 },
@@ -529,9 +1089,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.8867062725038731,
                   "pUsed": 0.7145317490998451,
+                  "drForKsMm": 0.8074149482102086,
+                  "ks": 1.0,
                   "etaMm": 0.8867062725038731,
                   "dpMm": 17.37658505178979,
-                  "ks": 1.0,
                   "drStartMm": 0.8074149482102086,
                   "drEndMm": 0.8867062725038863
                 },
@@ -542,9 +1103,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.1465325558376234,
                   "pUsed": 0.7041386977664951,
+                  "drForKsMm": 0.8867062725038863,
+                  "ks": 1.0,
                   "etaMm": 1.1465325558376234,
                   "dpMm": 14.217293727496099,
-                  "ks": 1.0,
                   "drStartMm": 0.8867062725038863,
                   "drEndMm": 1.1465325558376094
                 },
@@ -555,9 +1117,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.9108865215827109,
                   "pUsed": 0.7135645391366916,
+                  "drForKsMm": 1.1465325558376094,
+                  "ks": 1.0,
                   "etaMm": 0.9108865215827109,
                   "dpMm": 23.717467444162395,
-                  "ks": 1.0,
                   "drStartMm": 1.1465325558376094,
                   "drEndMm": 0.9108865215827109
                 },
@@ -568,9 +1131,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.0090282216956872,
                   "pUsed": 0.7096388711321726,
+                  "drForKsMm": 0.9108865215827109,
+                  "ks": 1.0,
                   "etaMm": 1.0090282216956872,
                   "dpMm": 18.305113478417297,
-                  "ks": 1.0,
                   "drStartMm": 0.9108865215827109,
                   "drEndMm": 1.0090282216957007
                 },
@@ -581,9 +1145,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.6995263594475315,
                   "pUsed": 0.7220189456220988,
+                  "drForKsMm": 1.0090282216957007,
+                  "ks": 1.0,
                   "etaMm": 0.6995263594475315,
                   "dpMm": 23.838971778304312,
-                  "ks": 1.0,
                   "drStartMm": 1.0090282216957007,
                   "drEndMm": 0.6995263594475318
                 },
@@ -594,9 +1159,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.6978761887702571,
                   "pUsed": 0.7220849524491898,
+                  "drForKsMm": 0.6995263594475318,
+                  "ks": 1.0,
                   "etaMm": 0.6978761887702571,
                   "dpMm": 22.564473640552478,
-                  "ks": 1.0,
                   "drStartMm": 0.6995263594475318,
                   "drEndMm": 0.697876188770266
                 },
@@ -607,9 +1173,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.9129248881791296,
                   "pUsed": 0.7134830044728349,
+                  "drForKsMm": 0.697876188770266,
+                  "ks": 1.0,
                   "etaMm": 0.9129248881791296,
                   "dpMm": 4.910123811229738,
-                  "ks": 1.0,
                   "drStartMm": 0.697876188770266,
                   "drEndMm": 0.9129248881791341
                 },
@@ -620,9 +1187,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.9470240645289475,
                   "pUsed": 0.7121190374188422,
+                  "drForKsMm": 0.9129248881791341,
+                  "ks": 1.0,
                   "etaMm": 0.9470240645289475,
                   "dpMm": 1.7430751118208718,
-                  "ks": 1.0,
                   "drStartMm": 0.9129248881791341,
                   "drEndMm": 0.9470240645289607
                 },
@@ -633,9 +1201,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.4508051684789607,
                   "pUsed": 0.6919677932608417,
+                  "drForKsMm": 0.9470240645289607,
+                  "ks": 1.0,
                   "etaMm": 1.4508051684789607,
                   "dpMm": 7.6769759354710345,
-                  "ks": 1.0,
                   "drStartMm": 0.9470240645289607,
                   "drEndMm": 1.4508051684789507
                 },
@@ -646,9 +1215,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.3932505666279063,
                   "pUsed": 0.6942699773348838,
+                  "drForKsMm": 1.4508051684789507,
+                  "ks": 1.0,
                   "etaMm": 1.3932505666279063,
                   "dpMm": 9.333194831521041,
-                  "ks": 1.0,
                   "drStartMm": 1.4508051684789507,
                   "drEndMm": 1.3932505666278985
                 },
@@ -659,9 +1229,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.3450918565804957,
                   "pUsed": 0.6961963257367803,
+                  "drForKsMm": 1.3932505666278985,
+                  "ks": 1.0,
                   "etaMm": 1.3450918565804957,
                   "dpMm": 7.622749433372093,
-                  "ks": 1.0,
                   "drStartMm": 1.3932505666278985,
                   "drEndMm": 1.3450918565804955
                 },
@@ -672,9 +1243,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.322152045681281,
                   "pUsed": 0.6971139181727488,
+                  "drForKsMm": 1.3450918565804955,
+                  "ks": 1.0,
                   "etaMm": 1.322152045681281,
                   "dpMm": 9.238908143419508,
-                  "ks": 1.0,
                   "drStartMm": 1.3450918565804955,
                   "drEndMm": 1.3221520456812925
                 },
@@ -685,9 +1257,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.937655303180733,
                   "pUsed": 0.7124937878727707,
+                  "drForKsMm": 1.3221520456812925,
+                  "ks": 1.0,
                   "etaMm": 0.937655303180733,
                   "dpMm": 4.021847954318702,
-                  "ks": 1.0,
                   "drStartMm": 1.3221520456812925,
                   "drEndMm": 0.9376553031807191
                 },
@@ -698,9 +1271,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.3118668400273488,
                   "pUsed": 0.6975253263989061,
+                  "drForKsMm": 0.9376553031807191,
+                  "ks": 1.0,
                   "etaMm": 1.3118668400273488,
                   "dpMm": 2.406344696819275,
-                  "ks": 1.0,
                   "drStartMm": 0.9376553031807191,
                   "drEndMm": 1.311866840027335
                 },
@@ -711,9 +1285,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.4360322988846954,
                   "pUsed": 0.6925587080446123,
+                  "drForKsMm": 1.311866840027335,
+                  "ks": 1.0,
                   "etaMm": 1.4360322988846954,
                   "dpMm": 0.2721331599726682,
-                  "ks": 1.0,
                   "drStartMm": 1.311866840027335,
                   "drEndMm": 1.4360322988846974
                 },
@@ -724,9 +1299,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.3939573072809741,
                   "pUsed": 0.694241707708761,
+                  "drForKsMm": 1.4360322988846974,
+                  "ks": 1.0,
                   "etaMm": 1.3939573072809741,
                   "dpMm": 3.8999677011153153,
-                  "ks": 1.0,
                   "drStartMm": 1.4360322988846974,
                   "drEndMm": 1.3939573072809708
                 },
@@ -737,9 +1313,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.6003968367902979,
                   "pUsed": 0.6859841265283881,
+                  "drForKsMm": 1.3939573072809708,
+                  "ks": 1.0,
                   "etaMm": 1.6003968367902979,
                   "dpMm": 0.982042692719034,
-                  "ks": 1.0,
                   "drStartMm": 1.3939573072809708,
                   "drEndMm": 1.6003968367903099
                 },
@@ -750,9 +1327,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.0832015135788544,
                   "pUsed": 0.6666719394568459,
+                  "drForKsMm": 1.6003968367903099,
+                  "ks": 1.0,
                   "etaMm": 2.0832015135788544,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 1.6003968367903099,
                   "drEndMm": 3.3155983503691573
                 },
@@ -763,9 +1341,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.300828705146357,
                   "pUsed": 0.6579668517941457,
+                  "drForKsMm": 3.3155983503691573,
+                  "ks": 1.0,
                   "etaMm": 2.300828705146357,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 3.3155983503691573,
                   "drEndMm": 5.2084270555155285
                 },
@@ -776,9 +1355,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.454610917201225,
                   "pUsed": 0.651815563311951,
+                  "drForKsMm": 5.2084270555155285,
+                  "ks": 1.0,
                   "etaMm": 2.454610917201225,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 5.2084270555155285,
                   "drEndMm": 7.527037972716755
                 },
@@ -789,9 +1369,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.467955216693681,
                   "pUsed": 0.6512817913322528,
+                  "drForKsMm": 7.527037972716755,
+                  "ks": 1.0,
                   "etaMm": 2.467955216693681,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 7.527037972716755,
                   "drEndMm": 9.44299318941043
                 },
@@ -802,9 +1383,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.7339558559411752,
                   "pUsed": 0.680641765762353,
+                  "drForKsMm": 9.44299318941043,
+                  "ks": 1.0,
                   "etaMm": 1.7339558559411752,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 9.44299318941043,
                   "drEndMm": 3.0649490453515966
                 },
@@ -815,9 +1397,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.0742393848616003,
                   "pUsed": 0.6670304246055361,
+                  "drForKsMm": 3.0649490453515966,
+                  "ks": 1.0,
                   "etaMm": 2.0742393848616003,
                   "dpMm": 19.87105095464841,
-                  "ks": 1.0,
                   "drStartMm": 3.0649490453515966,
                   "drEndMm": 2.074239384861613
                 },
@@ -828,9 +1411,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.1341336450672466,
                   "pUsed": 0.6646346541973102,
+                  "drForKsMm": 2.074239384861613,
+                  "ks": 1.0,
                   "etaMm": 2.1341336450672466,
                   "dpMm": 28.653760615138395,
-                  "ks": 1.0,
                   "drStartMm": 2.074239384861613,
                   "drEndMm": 2.1341336450672372
                 },
@@ -841,9 +1425,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.9510233428103112,
                   "pUsed": 0.6719590662875876,
+                  "drForKsMm": 2.1341336450672372,
+                  "ks": 1.0,
                   "etaMm": 1.9510233428103112,
                   "dpMm": 32.28986635493277,
-                  "ks": 1.0,
                   "drStartMm": 2.1341336450672372,
                   "drEndMm": 1.9510233428103163
                 },
@@ -854,9 +1439,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.9958812319630408,
                   "pUsed": 0.6701647507214784,
+                  "drForKsMm": 1.9510233428103163,
+                  "ks": 1.0,
                   "etaMm": 1.9958812319630408,
                   "dpMm": 15.680976657189689,
-                  "ks": 1.0,
                   "drStartMm": 1.9510233428103163,
                   "drEndMm": 1.9958812319630397
                 },
@@ -867,9 +1453,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.1536481946382025,
                   "pUsed": 0.6638540722144719,
+                  "drForKsMm": 1.9958812319630397,
+                  "ks": 1.0,
                   "etaMm": 2.1536481946382025,
                   "dpMm": 30.02811876803696,
-                  "ks": 1.0,
                   "drStartMm": 1.9958812319630397,
                   "drEndMm": 2.1536481946382082
                 },
@@ -880,9 +1467,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.677376108106389,
                   "pUsed": 0.6429049556757445,
+                  "drForKsMm": 2.1536481946382082,
+                  "ks": 1.0,
                   "etaMm": 2.677376108106389,
                   "dpMm": 11.478351805361797,
-                  "ks": 1.0,
                   "drStartMm": 2.1536481946382082,
                   "drEndMm": 2.6773761081063867
                 },
@@ -893,9 +1481,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.3149134683055603,
                   "pUsed": 0.6174034612677777,
+                  "drForKsMm": 2.6773761081063867,
+                  "ks": 1.0,
                   "etaMm": 3.3149134683055603,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 2.6773761081063867,
                   "drEndMm": 4.848289576411929
                 },
@@ -906,9 +1495,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.3875302466011656,
                   "pUsed": 0.6144987901359534,
+                  "drForKsMm": 4.848289576411929,
+                  "ks": 1.0,
                   "etaMm": 3.3875302466011656,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 4.848289576411929,
                   "drEndMm": 7.755819823013098
                 },
@@ -919,9 +1509,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.0366644885490315,
                   "pUsed": 0.6285334204580388,
+                  "drForKsMm": 7.755819823013098,
+                  "ks": 1.0,
                   "etaMm": 3.0366644885490315,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 7.755819823013098,
                   "drEndMm": 4.400484311562138
                 },
@@ -932,9 +1523,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.595339219860437,
                   "pUsed": 0.6461864312055826,
+                  "drForKsMm": 4.400484311562138,
+                  "ks": 1.0,
                   "etaMm": 2.595339219860437,
                   "dpMm": 4.511515688437868,
-                  "ks": 1.0,
                   "drStartMm": 4.400484311562138,
                   "drEndMm": 2.595339219860449
                 },
@@ -945,9 +1537,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.425017753865659,
                   "pUsed": 0.6529992898453737,
+                  "drForKsMm": 2.595339219860449,
+                  "ks": 1.0,
                   "etaMm": 2.425017753865659,
                   "dpMm": 3.8446607801395487,
-                  "ks": 1.0,
                   "drStartMm": 2.595339219860449,
                   "drEndMm": 2.42501775386566
                 },
@@ -958,9 +1551,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.904877703272697,
                   "pUsed": 0.6338048918690922,
+                  "drForKsMm": 2.42501775386566,
+                  "ks": 1.0,
                   "etaMm": 2.904877703272697,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 2.42501775386566,
                   "drEndMm": 3.9538954571383442
                 },
@@ -971,9 +1565,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.564295103082285,
                   "pUsed": 0.6074281958767086,
+                  "drForKsMm": 3.9538954571383442,
+                  "ks": 1.0,
                   "etaMm": 3.564295103082285,
                   "dpMm": 3.0301045428616646,
-                  "ks": 1.0,
                   "drStartMm": 3.9538954571383442,
                   "drEndMm": 3.564295103082287
                 },
@@ -984,9 +1579,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.7666471591449877,
                   "pUsed": 0.5993341136342005,
+                  "drForKsMm": 3.564295103082287,
+                  "ks": 1.0,
                   "etaMm": 3.7666471591449877,
                   "dpMm": 3.779704896917707,
-                  "ks": 1.0,
                   "drStartMm": 3.564295103082287,
                   "drEndMm": 3.7666471591449806
                 },
@@ -997,9 +1593,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.562233769825737,
                   "pUsed": 0.6075106492069706,
+                  "drForKsMm": 3.7666471591449806,
+                  "ks": 1.0,
                   "etaMm": 3.562233769825737,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 3.7666471591449806,
                   "drEndMm": 3.776880928970712
                 },
@@ -1010,9 +1607,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.311148411890844,
                   "pUsed": 0.6175540635243663,
+                  "drForKsMm": 3.776880928970712,
+                  "ks": 1.0,
                   "etaMm": 3.311148411890844,
                   "dpMm": 12.28711907102928,
-                  "ks": 1.0,
                   "drStartMm": 3.776880928970712,
                   "drEndMm": 3.311148411890855
                 },
@@ -1023,9 +1621,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.3879102257943545,
                   "pUsed": 0.5744835909682259,
+                  "drForKsMm": 3.311148411890855,
+                  "ks": 1.0,
                   "etaMm": 4.3879102257943545,
                   "dpMm": 13.192851588109136,
-                  "ks": 1.0,
                   "drStartMm": 3.311148411890855,
                   "drEndMm": 4.387910225794343
                 },
@@ -1036,9 +1635,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.7268124039675663,
                   "pUsed": 0.6409275038412974,
+                  "drForKsMm": 4.387910225794343,
+                  "ks": 1.0,
                   "etaMm": 2.7268124039675663,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 4.387910225794343,
                   "drEndMm": 4.186722629761903
                 },
@@ -1049,9 +1649,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.080094276965431,
                   "pUsed": 0.5867962289213828,
+                  "drForKsMm": 4.186722629761903,
+                  "ks": 1.0,
                   "etaMm": 4.080094276965431,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 4.186722629761903,
                   "drEndMm": 7.378816906727337
                 },
@@ -1062,9 +1663,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.8865682587123307,
                   "pUsed": 0.5945372696515068,
+                  "drForKsMm": 7.378816906727337,
+                  "ks": 1.0,
                   "etaMm": 3.8865682587123307,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 7.378816906727337,
                   "drEndMm": 10.937385165439679
                 },
@@ -1075,9 +1677,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.211008479830947,
                   "pUsed": 0.5815596608067621,
+                  "drForKsMm": 10.937385165439679,
+                  "ks": 1.0,
                   "etaMm": 4.211008479830947,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 10.937385165439679,
                   "drEndMm": 9.90039364527064
                 },
@@ -1088,9 +1691,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.695551331586372,
                   "pUsed": 0.5621779467365452,
+                  "drForKsMm": 9.90039364527064,
+                  "ks": 1.0,
                   "etaMm": 4.695551331586372,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 9.90039364527064,
                   "drEndMm": 7.547944976856996
                 },
@@ -1101,9 +1705,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.077599430579197,
                   "pUsed": 0.5868960227768322,
+                  "drForKsMm": 7.547944976856996,
+                  "ks": 1.0,
                   "etaMm": 4.077599430579197,
                   "dpMm": 0.49205502314299565,
-                  "ks": 1.0,
                   "drStartMm": 7.547944976856996,
                   "drEndMm": 4.077599430579198
                 },
@@ -1114,9 +1719,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.1330544586104225,
                   "pUsed": 0.6246778216555832,
+                  "drForKsMm": 4.077599430579198,
+                  "ks": 1.0,
                   "etaMm": 3.1330544586104225,
                   "dpMm": 17.282400569420815,
-                  "ks": 1.0,
                   "drStartMm": 4.077599430579198,
                   "drEndMm": 3.1330544586104168
                 },
@@ -1127,9 +1733,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.274326986208257,
                   "pUsed": 0.5790269205516698,
+                  "drForKsMm": 3.1330544586104168,
+                  "ks": 1.0,
                   "etaMm": 4.274326986208257,
                   "dpMm": 17.970945541389597,
-                  "ks": 1.0,
                   "drStartMm": 3.1330544586104168,
                   "drEndMm": 4.274326986208251
                 },
@@ -1140,9 +1747,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.316156392187352,
                   "pUsed": 0.617353744312506,
+                  "drForKsMm": 4.274326986208251,
+                  "ks": 1.0,
                   "etaMm": 3.316156392187352,
                   "dpMm": 8.477673013791758,
-                  "ks": 1.0,
                   "drStartMm": 4.274326986208251,
                   "drEndMm": 3.316156392187338
                 },
@@ -1153,9 +1761,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.0222463864064055,
                   "pUsed": 0.5491101445437438,
+                  "drForKsMm": 3.316156392187338,
+                  "ks": 1.0,
                   "etaMm": 5.0222463864064055,
                   "dpMm": 13.827843607812667,
-                  "ks": 1.0,
                   "drStartMm": 3.316156392187338,
                   "drEndMm": 5.022246386406408
                 },
@@ -1166,9 +1775,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.234107407317799,
                   "pUsed": 0.5406357037072881,
+                  "drForKsMm": 5.022246386406408,
+                  "ks": 1.0,
                   "etaMm": 5.234107407317799,
                   "dpMm": 2.105753613593606,
-                  "ks": 1.0,
                   "drStartMm": 5.022246386406408,
                   "drEndMm": 5.234107407317794
                 },
@@ -1179,9 +1789,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.805692636371291,
                   "pUsed": 0.5977722945451485,
+                  "drForKsMm": 5.234107407317794,
+                  "ks": 1.0,
                   "etaMm": 3.805692636371291,
                   "dpMm": 3.0618925926821987,
-                  "ks": 1.0,
                   "drStartMm": 5.234107407317794,
                   "drEndMm": 3.8056926363713046
                 },
@@ -1192,9 +1803,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.994647442813508,
                   "pUsed": 0.5902141022874597,
+                  "drForKsMm": 3.8056926363713046,
+                  "ks": 1.0,
                   "etaMm": 3.994647442813508,
                   "dpMm": 10.650307363628684,
-                  "ks": 1.0,
                   "drStartMm": 3.8056926363713046,
                   "drEndMm": 3.994647442813516
                 },
@@ -1205,9 +1817,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.845519926895567,
                   "pUsed": 0.5561792029241773,
+                  "drForKsMm": 3.994647442813516,
+                  "ks": 1.0,
                   "etaMm": 4.845519926895567,
                   "dpMm": 19.821352557186486,
-                  "ks": 1.0,
                   "drStartMm": 3.994647442813516,
                   "drEndMm": 4.845519926895577
                 },
@@ -1218,9 +1831,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.839609392560481,
                   "pUsed": 0.5964156242975808,
+                  "drForKsMm": 4.845519926895577,
+                  "ks": 1.0,
                   "etaMm": 3.839609392560481,
                   "dpMm": 20.002480073104437,
-                  "ks": 1.0,
                   "drStartMm": 4.845519926895577,
                   "drEndMm": 3.839609392560476
                 },
@@ -1231,9 +1845,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.100300805851515,
                   "pUsed": 0.5459879677659394,
+                  "drForKsMm": 3.839609392560476,
+                  "ks": 1.0,
                   "etaMm": 5.100300805851515,
                   "dpMm": 6.448390607439535,
-                  "ks": 1.0,
                   "drStartMm": 3.839609392560476,
                   "drEndMm": 5.100300805851504
                 },
@@ -1244,9 +1859,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.86105500134674,
                   "pUsed": 0.5955577999461305,
+                  "drForKsMm": 5.100300805851504,
+                  "ks": 1.0,
                   "etaMm": 3.86105500134674,
                   "dpMm": 12.811699194148503,
-                  "ks": 1.0,
                   "drStartMm": 5.100300805851504,
                   "drEndMm": 3.8610550013467275
                 },
@@ -1257,9 +1873,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.671429308667001,
                   "pUsed": 0.60314282765332,
+                  "drForKsMm": 3.8610550013467275,
+                  "ks": 1.0,
                   "etaMm": 3.671429308667001,
                   "dpMm": 14.274944998653268,
-                  "ks": 1.0,
                   "drStartMm": 3.8610550013467275,
                   "drEndMm": 3.671429308667001
                 },
@@ -1270,9 +1887,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.0460891564194927,
                   "pUsed": 0.6281564337432204,
+                  "drForKsMm": 3.671429308667001,
+                  "ks": 1.0,
                   "etaMm": 3.0460891564194927,
                   "dpMm": 9.624570691332991,
-                  "ks": 1.0,
                   "drStartMm": 3.671429308667001,
                   "drEndMm": 3.046089156419498
                 },
@@ -1283,9 +1901,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.1207901939692935,
                   "pUsed": 0.5851683922412283,
+                  "drForKsMm": 3.046089156419498,
+                  "ks": 1.0,
                   "etaMm": 4.1207901939692935,
                   "dpMm": 6.433910843580492,
-                  "ks": 1.0,
                   "drStartMm": 3.046089156419498,
                   "drEndMm": 4.120790193969299
                 },
@@ -1296,9 +1915,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.0609173604209894,
                   "pUsed": 0.6275633055831604,
+                  "drForKsMm": 4.120790193969299,
+                  "ks": 1.0,
                   "etaMm": 3.0609173604209894,
                   "dpMm": 23.015209806030697,
-                  "ks": 1.0,
                   "drStartMm": 4.120790193969299,
                   "drEndMm": 3.0609173604210014
                 },
@@ -1309,9 +1929,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.3187255397571813,
                   "pUsed": 0.6172509784097128,
+                  "drForKsMm": 3.0609173604210014,
+                  "ks": 1.0,
                   "etaMm": 3.3187255397571813,
                   "dpMm": 28.179082639579008,
-                  "ks": 1.0,
                   "drStartMm": 3.0609173604210014,
                   "drEndMm": 3.3187255397571676
                 },
@@ -1322,9 +1943,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.17471285538739,
                   "pUsed": 0.5830114857845045,
+                  "drForKsMm": 3.3187255397571676,
+                  "ks": 1.0,
                   "etaMm": 4.17471285538739,
                   "dpMm": 5.5532744602428465,
-                  "ks": 1.0,
                   "drStartMm": 3.3187255397571676,
                   "drEndMm": 4.174712855387384
                 },
@@ -1335,9 +1957,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.0182315413059673,
                   "pUsed": 0.6292707383477614,
+                  "drForKsMm": 4.174712855387384,
+                  "ks": 1.0,
                   "etaMm": 3.0182315413059673,
                   "dpMm": 4.137287144612628,
-                  "ks": 1.0,
                   "drStartMm": 4.174712855387384,
                   "drEndMm": 3.0182315413059655
                 },
@@ -1348,9 +1971,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.303622580934507,
                   "pUsed": 0.5778550967626198,
+                  "drForKsMm": 3.0182315413059655,
+                  "ks": 1.0,
                   "etaMm": 4.303622580934507,
                   "dpMm": 0.0377684586940461,
-                  "ks": 1.0,
                   "drStartMm": 3.0182315413059655,
                   "drEndMm": 4.303622580934501
                 },
@@ -1361,9 +1985,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.91871092224729,
                   "pUsed": 0.5532515631101085,
+                  "drForKsMm": 4.303622580934501,
+                  "ks": 1.0,
                   "etaMm": 4.91871092224729,
                   "dpMm": 3.280377419065502,
-                  "ks": 1.0,
                   "drStartMm": 4.303622580934501,
                   "drEndMm": 4.9187109222473
                 },
@@ -1374,9 +1999,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.031517794894849,
                   "pUsed": 0.5487392882042061,
+                  "drForKsMm": 4.9187109222473,
+                  "ks": 1.0,
                   "etaMm": 5.031517794894849,
                   "dpMm": 0.4252890777526943,
-                  "ks": 1.0,
                   "drStartMm": 4.9187109222473,
                   "drEndMm": 5.031517794894853
                 },
@@ -1387,9 +2013,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.697987717179012,
                   "pUsed": 0.5220804913128396,
+                  "drForKsMm": 5.031517794894853,
+                  "ks": 1.0,
                   "etaMm": 5.697987717179012,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 5.031517794894853,
                   "drEndMm": 10.089505512073885
                 },
@@ -1400,9 +2027,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.92149242825681,
                   "pUsed": 0.5131403028697277,
+                  "drForKsMm": 10.089505512073885,
+                  "ks": 1.0,
                   "etaMm": 5.92149242825681,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 10.089505512073885,
                   "drEndMm": 15.418997940330684
                 },
@@ -1413,9 +2041,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 6.139296061776084,
                   "pUsed": 0.5044281575289566,
+                  "drForKsMm": 15.418997940330684,
+                  "ks": 1.0,
                   "etaMm": 6.139296061776084,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 15.418997940330684,
                   "drEndMm": 20.17429400210679
                 },
@@ -1426,9 +2055,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.741259859880368,
                   "pUsed": 0.5203496056047853,
+                  "drForKsMm": 20.17429400210679,
+                  "ks": 1.0,
                   "etaMm": 5.741259859880368,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 20.17429400210679,
                   "drEndMm": 23.81155386198715
                 },
@@ -1439,9 +2069,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.739637192287353,
                   "pUsed": 0.5204145123085059,
+                  "drForKsMm": 23.81155386198715,
+                  "ks": 1.0,
                   "etaMm": 5.739637192287353,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 23.81155386198715,
                   "drEndMm": 28.607191054274494
                 },
@@ -1452,9 +2083,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.948262549537656,
                   "pUsed": 0.5520694980184938,
+                  "drForKsMm": 28.607191054274494,
+                  "ks": 1.0,
                   "etaMm": 4.948262549537656,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 28.607191054274494,
                   "drEndMm": 31.243453603812156
                 },
@@ -1465,9 +2097,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.919271798287473,
                   "pUsed": 0.5532291280685011,
+                  "drForKsMm": 31.243453603812156,
+                  "ks": 1.0,
                   "etaMm": 4.919271798287473,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 31.243453603812156,
                   "drEndMm": 23.850725402099613
                 },
@@ -1478,9 +2111,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.693164763263257,
                   "pUsed": 0.5622734094694698,
+                  "drForKsMm": 23.850725402099613,
+                  "ks": 1.0,
                   "etaMm": 4.693164763263257,
                   "dpMm": 5.509274597900401,
-                  "ks": 1.0,
                   "drStartMm": 23.850725402099613,
                   "drEndMm": 4.693164763263269
                 },
@@ -1491,9 +2125,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.190917900340433,
                   "pUsed": 0.5823632839863827,
+                  "drForKsMm": 4.693164763263269,
+                  "ks": 1.0,
                   "etaMm": 4.190917900340433,
                   "dpMm": 17.634835236736734,
-                  "ks": 1.0,
                   "drStartMm": 4.693164763263269,
                   "drEndMm": 4.190917900340423
                 },
@@ -1504,9 +2139,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.308607168157116,
                   "pUsed": 0.5776557132737155,
+                  "drForKsMm": 4.190917900340423,
+                  "ks": 1.0,
                   "etaMm": 4.308607168157116,
                   "dpMm": 3.8410820996595874,
-                  "ks": 1.0,
                   "drStartMm": 4.190917900340423,
                   "drEndMm": 4.308607168157124
                 },
@@ -1517,9 +2153,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.07131149458369,
                   "pUsed": 0.5871475402166524,
+                  "drForKsMm": 4.308607168157124,
+                  "ks": 1.0,
                   "etaMm": 4.07131149458369,
                   "dpMm": 2.8513928318428725,
-                  "ks": 1.0,
                   "drStartMm": 4.308607168157124,
                   "drEndMm": 4.071311494583682
                 },
@@ -1530,9 +2167,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.7061121744291388,
                   "pUsed": 0.6017555130228345,
+                  "drForKsMm": 4.071311494583682,
+                  "ks": 1.0,
                   "etaMm": 3.7061121744291388,
                   "dpMm": 4.00868850541633,
-                  "ks": 1.0,
                   "drStartMm": 4.071311494583682,
                   "drEndMm": 3.706112174429137
                 },
@@ -1543,9 +2181,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.391229448026668,
                   "pUsed": 0.6143508220789333,
+                  "drForKsMm": 3.706112174429137,
+                  "ks": 1.0,
                   "etaMm": 3.391229448026668,
                   "dpMm": 5.885887825570876,
-                  "ks": 1.0,
                   "drStartMm": 3.706112174429137,
                   "drEndMm": 3.391229448026678
                 },
@@ -1556,9 +2195,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.161198387284863,
                   "pUsed": 0.6235520645086056,
+                  "drForKsMm": 3.391229448026678,
+                  "ks": 1.0,
                   "etaMm": 3.161198387284863,
                   "dpMm": 8.352770551973322,
-                  "ks": 1.0,
                   "drStartMm": 3.391229448026678,
                   "drEndMm": 3.1611983872848555
                 },
@@ -1569,9 +2209,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.3485220176376163,
                   "pUsed": 0.6160591192944954,
+                  "drForKsMm": 3.1611983872848555,
+                  "ks": 1.0,
                   "etaMm": 3.3485220176376163,
                   "dpMm": 0.5828016127151443,
-                  "ks": 1.0,
                   "drStartMm": 3.1611983872848555,
                   "drEndMm": 3.348522017637606
                 },
@@ -1582,9 +2223,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.3105590286895,
                   "pUsed": 0.53757763885242,
+                  "drForKsMm": 3.348522017637606,
+                  "ks": 1.0,
                   "etaMm": 5.3105590286895,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 3.348522017637606,
                   "drEndMm": 6.883081046327106
                 },
@@ -1595,9 +2237,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.160614941122513,
                   "pUsed": 0.5435754023550995,
+                  "drForKsMm": 6.883081046327106,
+                  "ks": 1.0,
                   "etaMm": 5.160614941122513,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 6.883081046327106,
                   "drEndMm": 9.755695987449599
                 },
@@ -1608,9 +2251,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.0705718843378165,
                   "pUsed": 0.5471771246264874,
+                  "drForKsMm": 9.755695987449599,
+                  "ks": 1.0,
                   "etaMm": 5.0705718843378165,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 9.755695987449599,
                   "drEndMm": 11.826267871787422
                 },
@@ -1621,9 +2265,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 5.042780996928598,
                   "pUsed": 0.5482887601228561,
+                  "drForKsMm": 11.826267871787422,
+                  "ks": 1.0,
                   "etaMm": 5.042780996928598,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 11.826267871787422,
                   "drEndMm": 14.85304886871603
                 },
@@ -1634,9 +2279,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.807561220926055,
                   "pUsed": 0.5576975511629578,
+                  "drForKsMm": 14.85304886871603,
+                  "ks": 1.0,
                   "etaMm": 4.807561220926055,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 14.85304886871603,
                   "drEndMm": 15.820610089642088
                 },
@@ -1647,9 +2293,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.573598767914896,
                   "pUsed": 0.5670560492834043,
+                  "drForKsMm": 15.820610089642088,
+                  "ks": 1.0,
                   "etaMm": 4.573598767914896,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 15.820610089642088,
                   "drEndMm": 9.930208857556977
                 },
@@ -1660,9 +2307,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.844117816595551,
                   "pUsed": 0.556235287336178,
+                  "drForKsMm": 9.930208857556977,
+                  "ks": 1.0,
                   "etaMm": 4.844117816595551,
                   "dpMm": 1.3097911424430322,
-                  "ks": 1.0,
                   "drStartMm": 9.930208857556977,
                   "drEndMm": 4.844117816595542
                 },
@@ -1673,9 +2321,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.171174681910363,
                   "pUsed": 0.5831530127235856,
+                  "drForKsMm": 4.844117816595542,
+                  "ks": 1.0,
                   "etaMm": 4.171174681910363,
                   "dpMm": 4.827882183404455,
-                  "ks": 1.0,
                   "drStartMm": 4.844117816595542,
                   "drEndMm": 4.171174681910372
                 },
@@ -1686,9 +2335,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.817954248276615,
                   "pUsed": 0.5972818300689354,
+                  "drForKsMm": 4.171174681910372,
+                  "ks": 1.0,
                   "etaMm": 3.817954248276615,
                   "dpMm": 6.8128253180896365,
-                  "ks": 1.0,
                   "drStartMm": 4.171174681910372,
                   "drEndMm": 3.8179542482766067
                 },
@@ -1699,9 +2349,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.1631914466660227,
                   "pUsed": 0.6234723421333591,
+                  "drForKsMm": 3.8179542482766067,
+                  "ks": 1.0,
                   "etaMm": 3.1631914466660227,
                   "dpMm": 8.278045751723397,
-                  "ks": 1.0,
                   "drStartMm": 3.8179542482766067,
                   "drEndMm": 3.163191446666019
                 },
@@ -1712,9 +2363,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.5938607903133497,
                   "pUsed": 0.606245568387466,
+                  "drForKsMm": 3.163191446666019,
+                  "ks": 1.0,
                   "etaMm": 3.5938607903133497,
                   "dpMm": 9.660808553333993,
-                  "ks": 1.0,
                   "drStartMm": 3.163191446666019,
                   "drEndMm": 3.5938607903133573
                 },
@@ -1725,9 +2377,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.6887623059976837,
                   "pUsed": 0.6024495077600927,
+                  "drForKsMm": 3.5938607903133573,
+                  "ks": 1.0,
                   "etaMm": 3.6887623059976837,
                   "dpMm": 4.862139209686632,
-                  "ks": 1.0,
                   "drStartMm": 3.5938607903133573,
                   "drEndMm": 3.6887623059976704
                 },
@@ -1738,9 +2391,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.7164517457117645,
                   "pUsed": 0.5613419301715294,
+                  "drForKsMm": 3.6887623059976704,
+                  "ks": 1.0,
                   "etaMm": 4.7164517457117645,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 3.6887623059976704,
                   "drEndMm": 5.421214051709427
                 },
@@ -1751,9 +2405,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.92970160387452,
                   "pUsed": 0.5528119358450192,
+                  "drForKsMm": 5.421214051709427,
+                  "ks": 1.0,
                   "etaMm": 4.92970160387452,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 5.421214051709427,
                   "drEndMm": 10.254915655583943
                 },
@@ -1764,9 +2419,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 4.70209392274523,
                   "pUsed": 0.5619162430901908,
+                  "drForKsMm": 10.254915655583943,
+                  "ks": 1.0,
                   "etaMm": 4.70209392274523,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 10.254915655583943,
                   "drEndMm": 13.717009578329169
                 },
@@ -1777,9 +2433,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.836509435370402,
                   "pUsed": 0.596539622585184,
+                  "drForKsMm": 13.717009578329169,
+                  "ks": 1.0,
                   "etaMm": 3.836509435370402,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 13.717009578329169,
                   "drEndMm": 15.929519013699576
                 },
@@ -1790,9 +2447,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.9229653688813868,
                   "pUsed": 0.6730813852447446,
+                  "drForKsMm": 15.929519013699576,
+                  "ks": 1.0,
                   "etaMm": 1.9229653688813868,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 15.929519013699576,
                   "drEndMm": 9.692484382580972
                 },
@@ -1803,9 +2461,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.125192814062369,
                   "pUsed": 0.6249922874375053,
+                  "drForKsMm": 9.692484382580972,
+                  "ks": 1.0,
                   "etaMm": 3.125192814062369,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 9.692484382580972,
                   "drEndMm": 4.53767719664333
                 },
@@ -1816,9 +2475,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.991438353744743,
                   "pUsed": 0.5903424658502103,
+                  "drForKsMm": 4.53767719664333,
+                  "ks": 1.0,
                   "etaMm": 3.991438353744743,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 4.53767719664333,
                   "drEndMm": 4.665115550388066
                 },
@@ -1829,9 +2489,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.4579776999624343,
                   "pUsed": 0.6116808920015027,
+                  "drForKsMm": 4.665115550388066,
+                  "ks": 1.0,
                   "etaMm": 3.4579776999624343,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 4.665115550388066,
                   "drEndMm": 5.6670932503505185
                 },
@@ -1842,9 +2503,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.5488940858052724,
                   "pUsed": 0.6080442365677892,
+                  "drForKsMm": 5.6670932503505185,
+                  "ks": 1.0,
                   "etaMm": 3.5488940858052724,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 5.6670932503505185,
                   "drEndMm": 4.047987336155785
                 },
@@ -1855,9 +2517,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.7230198960409315,
                   "pUsed": 0.6010792041583628,
+                  "drForKsMm": 4.047987336155785,
+                  "ks": 1.0,
                   "etaMm": 3.7230198960409315,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 4.047987336155785,
                   "drEndMm": 7.0670072321967154
                 },
@@ -1868,9 +2531,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.278082563519555,
                   "pUsed": 0.6188766974592178,
+                  "drForKsMm": 7.0670072321967154,
+                  "ks": 1.0,
                   "etaMm": 3.278082563519555,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 7.0670072321967154,
                   "drEndMm": 5.0170897957162595
                 },
@@ -1881,9 +2545,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.5387563282233867,
                   "pUsed": 0.6884497468710646,
+                  "drForKsMm": 5.0170897957162595,
+                  "ks": 1.0,
                   "etaMm": 1.5387563282233867,
                   "dpMm": 18.99891020428373,
-                  "ks": 1.0,
                   "drStartMm": 5.0170897957162595,
                   "drEndMm": 1.5387563282233998
                 },
@@ -1894,9 +2559,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 0.9976734837662953,
                   "pUsed": 0.7100930606493483,
+                  "drForKsMm": 1.5387563282233998,
+                  "ks": 1.0,
                   "etaMm": 0.9976734837662953,
                   "dpMm": 47.79724367177661,
-                  "ks": 1.0,
                   "drStartMm": 1.5387563282233998,
                   "drEndMm": 0.9976734837663059
                 },
@@ -1907,9 +2573,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.9619558755193152,
                   "pUsed": 0.6715217649792274,
+                  "drForKsMm": 0.9976734837663059,
+                  "ks": 1.0,
                   "etaMm": 1.9619558755193152,
                   "dpMm": 19.818326516233697,
-                  "ks": 1.0,
                   "drStartMm": 0.9976734837663059,
                   "drEndMm": 1.9619558755193225
                 },
@@ -1920,9 +2587,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.1978438820331143,
                   "pUsed": 0.6620862447186755,
+                  "drForKsMm": 1.9619558755193225,
+                  "ks": 1.0,
                   "etaMm": 2.1978438820331143,
                   "dpMm": 12.182044124480683,
-                  "ks": 1.0,
                   "drStartMm": 1.9619558755193225,
                   "drEndMm": 2.197843882033112
                 },
@@ -1933,9 +2601,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.09003354733252,
                   "pUsed": 0.6663986581066993,
+                  "drForKsMm": 2.197843882033112,
+                  "ks": 1.0,
                   "etaMm": 2.09003354733252,
                   "dpMm": 21.258156117966905,
-                  "ks": 1.0,
                   "drStartMm": 2.197843882033112,
                   "drEndMm": 2.090033547332524
                 },
@@ -1946,9 +2615,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.474664841662009,
                   "pUsed": 0.6510134063335197,
+                  "drForKsMm": 2.090033547332524,
+                  "ks": 1.0,
                   "etaMm": 2.474664841662009,
                   "dpMm": 4.03796645266749,
-                  "ks": 1.0,
                   "drStartMm": 2.090033547332524,
                   "drEndMm": 2.474664841662019
                 },
@@ -1959,9 +2629,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.6815287266989234,
                   "pUsed": 0.6427388509320431,
+                  "drForKsMm": 2.474664841662019,
+                  "ks": 1.0,
                   "etaMm": 2.6815287266989234,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 2.474664841662019,
                   "drEndMm": 4.372193568360956
                 },
@@ -1972,9 +2643,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.13903766658588,
                   "pUsed": 0.6244384933365649,
+                  "drForKsMm": 4.372193568360956,
+                  "ks": 1.0,
                   "etaMm": 3.13903766658588,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 4.372193568360956,
                   "drEndMm": 7.383231234946862
                 },
@@ -1985,9 +2657,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 3.032047639153433,
                   "pUsed": 0.6287180944338627,
+                  "drForKsMm": 7.383231234946862,
+                  "ks": 1.0,
                   "etaMm": 3.032047639153433,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 7.383231234946862,
                   "drEndMm": 8.5592788741003
                 },
@@ -1998,9 +2671,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.4103507811861413,
                   "pUsed": 0.6535859687525544,
+                  "drForKsMm": 8.5592788741003,
+                  "ks": 1.0,
                   "etaMm": 2.4103507811861413,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 8.5592788741003,
                   "drEndMm": 7.793629655286452
                 },
@@ -2011,9 +2685,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 2.476734543053309,
                   "pUsed": 0.6509306182778677,
+                  "drForKsMm": 7.793629655286452,
+                  "ks": 1.0,
                   "etaMm": 2.476734543053309,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 7.793629655286452,
                   "drEndMm": 9.158364198339768
                 },
@@ -2024,9 +2699,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.5490882366891674,
                   "pUsed": 0.6880364705324333,
+                  "drForKsMm": 9.158364198339768,
+                  "ks": 1.0,
                   "etaMm": 1.5490882366891674,
                   "dpMm": 0.0,
-                  "ks": 1.0,
                   "drStartMm": 9.158364198339768,
                   "drEndMm": 2.0514524350289207
                 },
@@ -2037,9 +2713,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.804499219107624,
                   "pUsed": 0.6778200312356951,
+                  "drForKsMm": 2.0514524350289207,
+                  "ks": 1.0,
                   "etaMm": 1.804499219107624,
                   "dpMm": 6.428547564971069,
-                  "ks": 1.0,
                   "drStartMm": 2.0514524350289207,
                   "drEndMm": 1.804499219107612
                 },
@@ -2050,9 +2727,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.6431807402973129,
                   "pUsed": 0.6842727703881075,
+                  "drForKsMm": 1.804499219107612,
+                  "ks": 1.0,
                   "etaMm": 1.6431807402973129,
                   "dpMm": 1.347500780892375,
-                  "ks": 1.0,
                   "drStartMm": 1.804499219107612,
                   "drEndMm": 1.6431807402973106
                 },
@@ -2063,9 +2741,10 @@
                   "irrigationMm": 0.0,
                   "etmMm": 1.5169923247525436,
                   "pUsed": 0.6893203070098983,
+                  "drForKsMm": 1.6431807402973106,
+                  "ks": 1.0,
                   "etaMm": 1.5169923247525436,
                   "dpMm": 4.916819259702692,
-                  "ks": 1.0,
                   "drStartMm": 1.6431807402973106,
                   "drEndMm": 1.5169923247525503
                 }
@@ -2074,7 +2753,7 @@
             {
               "startYear": 2006,
               "status": "ok",
-              "A": 99.9611715700877,
+              "A": 99.9569816036936,
               "reason": null,
               "cycles": [
                 {
@@ -2095,6 +2774,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2119,6 +2800,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -2127,14 +2810,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 394.90124097307364,
+                  "etaSum": 394.8611239785331,
                   "etmSum": 395.27316528439223,
-                  "dpSum": 734.8155679478434,
+                  "dpSum": 734.855684942384,
                   "drEnd": 1.581580098019117,
                   "water": {
-                    "fraction": 0.9988238377153336,
+                    "fraction": 0.998696972935278,
                     "clipped": false,
-                    "score": 99.88355993381802
+                    "score": 99.87100032059253
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 1129.5760000000005,
@@ -2143,10 +2826,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9988238377153336,
-                  "waterScore": 99.88355993381802,
+                  "waterFraction": 0.998696972935278,
+                  "waterScore": 99.87100032059253,
                   "clipped": false
                 }
               ]
@@ -2154,7 +2839,7 @@
             {
               "startYear": 2007,
               "status": "ok",
-              "A": 98.27132120267197,
+              "A": 98.00664283330883,
               "reason": null,
               "cycles": [
                 {
@@ -2175,6 +2860,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2183,14 +2870,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 342.800394858526,
+                  "etaSum": 340.3898082127296,
                   "etmSum": 358.8663316743294,
-                  "dpSum": 664.6786972928695,
+                  "dpSum": 667.0892839386659,
                   "drEnd": 0.8284107672409533,
                   "water": {
-                    "fraction": 0.9485161306384665,
+                    "fraction": 0.940791319481811,
                     "clipped": false,
-                    "score": 94.90309693320819
+                    "score": 94.1383406286993
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 1011.0720000000005,
@@ -2199,10 +2886,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9485161306384665,
-                  "waterScore": 94.90309693320819,
+                  "waterFraction": 0.940791319481811,
+                  "waterScore": 94.1383406286993,
                   "clipped": false
                 },
                 {
@@ -2223,6 +2912,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2234,19 +2925,19 @@
             {
               "startYear": 2008,
               "status": "ok",
-              "A": 99.9611715700877,
+              "A": 99.9569816036936,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 394.90124097307364,
+                  "etaSum": 394.8611239785331,
                   "etmSum": 395.27316528439223,
-                  "dpSum": 661.2563391249453,
+                  "dpSum": 661.2964561194858,
                   "drEnd": 1.581580098019117,
                   "water": {
-                    "fraction": 0.9988238377153336,
+                    "fraction": 0.998696972935278,
                     "clipped": false,
-                    "score": 99.88355993381802
+                    "score": 99.87100032059253
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 1129.5760000000005,
@@ -2255,10 +2946,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9988238377153336,
-                  "waterScore": 99.88355993381802,
+                  "waterFraction": 0.998696972935278,
+                  "waterScore": 99.87100032059253,
                   "clipped": false
                 },
                 {
@@ -2279,6 +2972,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -2303,6 +2998,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2335,6 +3032,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2359,6 +3058,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -2383,6 +3084,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2415,6 +3118,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2439,6 +3144,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -2463,6 +3170,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2495,6 +3204,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2519,6 +3230,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -2543,6 +3256,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2554,7 +3269,7 @@
             {
               "startYear": 2012,
               "status": "ok",
-              "A": 99.99391605948672,
+              "A": 99.9505382048356,
               "reason": null,
               "cycles": [
                 {
@@ -2575,6 +3290,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2583,14 +3300,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 352.8574604060046,
+                  "etaSum": 352.4542943507068,
                   "etmSum": 352.91403424960293,
-                  "dpSum": 387.44054083666003,
+                  "dpSum": 387.8437068919577,
                   "drEnd": 7.537881459139101,
                   "water": {
-                    "fraction": 0.9998156493825007,
+                    "fraction": 0.9985018989543595,
                     "clipped": false,
-                    "score": 99.98174928886756
+                    "score": 99.85168799648159
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 743.9599999999999,
@@ -2599,10 +3316,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9998156493825007,
-                  "waterScore": 99.98174928886756,
+                  "waterFraction": 0.9985018989543595,
+                  "waterScore": 99.85168799648159,
                   "clipped": false
                 },
                 {
@@ -2623,6 +3342,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2634,7 +3355,7 @@
             {
               "startYear": 2013,
               "status": "ok",
-              "A": 99.6848253811541,
+              "A": 99.44454332838944,
               "reason": null,
               "cycles": [
                 {
@@ -2655,6 +3376,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2663,14 +3386,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 369.52584398937336,
+                  "etaSum": 367.4543557879986,
                   "etmSum": 371.99379499785226,
-                  "dpSum": 315.25131358614914,
+                  "dpSum": 317.3228017875238,
                   "drEnd": 3.2191338796689166,
                   "water": {
-                    "fraction": 0.9923704542981231,
+                    "fraction": 0.9859665533094126,
                     "clipped": false,
-                    "score": 99.24467497551419
+                    "score": 98.61068877763185
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 689.6640000000001,
@@ -2679,22 +3402,24 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9923704542981231,
-                  "waterScore": 99.24467497551419,
+                  "waterFraction": 0.9859665533094126,
+                  "waterScore": 98.61068877763185,
                   "clipped": false
                 },
                 {
                   "status": "ok",
-                  "etaSum": 463.8744579237664,
+                  "etaSum": 463.56306013588915,
                   "etmSum": 464.5826764210781,
-                  "dpSum": 149.03067383405494,
+                  "dpSum": 149.34207162193218,
                   "drEnd": 1.3082656374903365,
                   "water": {
-                    "fraction": 0.9980944766850556,
+                    "fraction": 0.9972566339186288,
                     "clipped": false,
-                    "score": 99.8113531918205
+                    "score": 99.72840675794426
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 614.8159999999999,
@@ -2703,10 +3428,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9980944766850556,
-                  "waterScore": 99.8113531918205,
+                  "waterFraction": 0.9972566339186288,
+                  "waterScore": 99.72840675794426,
                   "clipped": false
                 }
               ]
@@ -2714,7 +3441,7 @@
             {
               "startYear": 2014,
               "status": "ok",
-              "A": 97.50192350680524,
+              "A": 97.19525007318244,
               "reason": null,
               "cycles": [
                 {
@@ -2735,6 +3462,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2743,14 +3472,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 385.0493488381919,
+                  "etaSum": 381.89830118179395,
                   "etmSum": 411.46313841850304,
-                  "dpSum": 161.56309136034008,
+                  "dpSum": 164.71413901673793,
                   "drEnd": 1.608051920948597,
                   "water": {
-                    "fraction": 0.9261759920120421,
+                    "fraction": 0.9173691160941028,
                     "clipped": false,
-                    "score": 92.69142320919217
+                    "score": 91.81954249331618
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 546.376,
@@ -2759,10 +3488,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9261759920120421,
-                  "waterScore": 92.69142320919217,
+                  "waterFraction": 0.9173691160941028,
+                  "waterScore": 91.81954249331618,
                   "clipped": false
                 },
                 {
@@ -2783,6 +3514,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2794,19 +3527,19 @@
             {
               "startYear": 2015,
               "status": "ok",
-              "A": 99.93707814731533,
+              "A": 99.90938683666113,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 463.8744579237664,
+                  "etaSum": 463.56306013588915,
                   "etmSum": 464.5826764210781,
-                  "dpSum": 77.24980771372392,
+                  "dpSum": 77.56120550160117,
                   "drEnd": 1.3082656374903365,
                   "water": {
-                    "fraction": 0.9980944766850556,
+                    "fraction": 0.9972566339186288,
                     "clipped": false,
-                    "score": 99.8113531918205
+                    "score": 99.72840675794426
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 614.8159999999999,
@@ -2815,10 +3548,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9980944766850556,
-                  "waterScore": 99.8113531918205,
+                  "waterFraction": 0.9972566339186288,
+                  "waterScore": 99.72840675794426,
                   "clipped": false
                 },
                 {
@@ -2839,6 +3574,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -2863,6 +3600,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2895,6 +3634,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2919,6 +3660,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -2943,6 +3686,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2954,7 +3699,7 @@
             {
               "startYear": 2017,
               "status": "ok",
-              "A": 97.85058241229353,
+              "A": 97.42369266483007,
               "reason": null,
               "cycles": [
                 {
@@ -2975,6 +3720,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -2983,14 +3730,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 403.90010096823215,
+                  "etaSum": 400.61545403884196,
                   "etmSum": 425.2722322424939,
-                  "dpSum": 153.89748719809324,
+                  "dpSum": 157.18213412748344,
                   "drEnd": 1.1246535208555457,
                   "water": {
-                    "fraction": 0.9422065465318543,
+                    "fraction": 0.9333243678180445,
                     "clipped": false,
-                    "score": 94.27844810665357
+                    "score": 93.3991124139864
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 557.76,
@@ -2999,22 +3746,24 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9422065465318543,
-                  "waterScore": 94.27844810665357,
+                  "waterFraction": 0.9333243678180445,
+                  "waterScore": 93.3991124139864,
                   "clipped": false
                 },
                 {
                   "status": "ok",
-                  "etaSum": 478.25763833106294,
+                  "etaSum": 476.8144201422286,
                   "etmSum": 480.6847363391557,
-                  "dpSum": 134.25167974397587,
+                  "dpSum": 135.6948979328101,
                   "drEnd": 2.041971595894381,
                   "water": {
-                    "fraction": 0.9936884359315804,
+                    "fraction": 0.9899354090520873,
                     "clipped": false,
-                    "score": 99.37515515722646
+                    "score": 99.00360549615664
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 611.5920000000001,
@@ -3023,10 +3772,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9936884359315804,
-                  "waterScore": 99.37515515722646,
+                  "waterFraction": 0.9899354090520873,
+                  "waterScore": 99.00360549615664,
                   "clipped": false
                 }
               ]
@@ -3034,19 +3785,19 @@
             {
               "startYear": 2018,
               "status": "ok",
-              "A": 96.36728257080372,
+              "A": 95.8848868891112,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 454.9670219837145,
+                  "etaSum": 452.7211081869938,
                   "etmSum": 469.3704747525893,
-                  "dpSum": 164.36756908799723,
+                  "dpSum": 166.613482884718,
                   "drEnd": 0.7985910717116553,
                   "water": {
-                    "fraction": 0.9616415668868312,
+                    "fraction": 0.9556603806024133,
                     "clipped": false,
-                    "score": 96.2025151217963
+                    "score": 95.61037767963892
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 693.5360000000001,
@@ -3055,22 +3806,24 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9616415668868312,
-                  "waterScore": 96.2025151217963,
+                  "waterFraction": 0.9556603806024133,
+                  "waterScore": 95.61037767963892,
                   "clipped": false
                 },
                 {
                   "status": "ok",
-                  "etaSum": 406.39121182628827,
+                  "etaSum": 403.263674651332,
                   "etmSum": 432.9112145648222,
-                  "dpSum": 70.28731849350258,
+                  "dpSum": 73.41485566845877,
                   "drEnd": 1.4051213915023055,
                   "water": {
-                    "fraction": 0.9295513672937031,
+                    "fraction": 0.9212432717069089,
                     "clipped": false,
-                    "score": 93.02558536207661
+                    "score": 92.20308389898398
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 476.07200000000006,
@@ -3079,10 +3832,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9295513672937031,
-                  "waterScore": 93.02558536207661,
+                  "waterFraction": 0.9212432717069089,
+                  "waterScore": 92.20308389898398,
                   "clipped": false
                 },
                 {
@@ -3103,6 +3858,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3114,19 +3871,19 @@
             {
               "startYear": 2019,
               "status": "ok",
-              "A": 99.79128306121298,
+              "A": 99.66675923820534,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 478.25763833106294,
+                  "etaSum": 476.8144201422286,
                   "etmSum": 480.6847363391557,
-                  "dpSum": 60.37633326483149,
+                  "dpSum": 61.819551453665724,
                   "drEnd": 2.041971595894381,
                   "water": {
-                    "fraction": 0.9936884359315804,
+                    "fraction": 0.9899354090520873,
                     "clipped": false,
-                    "score": 99.37515515722646
+                    "score": 99.00360549615664
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 611.5920000000001,
@@ -3135,10 +3892,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9936884359315804,
-                  "waterScore": 99.37515515722646,
+                  "waterFraction": 0.9899354090520873,
+                  "waterScore": 99.00360549615664,
                   "clipped": false
                 },
                 {
@@ -3159,6 +3918,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3183,6 +3944,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3215,6 +3978,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3239,6 +4004,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3263,6 +4030,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3295,6 +4064,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3319,6 +4090,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3343,6 +4116,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3375,6 +4150,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3399,6 +4176,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3423,6 +4202,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3433,8 +4214,8 @@
             }
           ],
           "summary": {
-            "medianA": 99.97754381478721,
-            "p10": 97.74598474064705,
+            "medianA": 99.9569816036936,
+            "p10": 97.35515988733579,
             "p90": 100.0,
             "validBlocks": 18,
             "totalBlocks": 18,
@@ -3446,12 +4227,18 @@
         "raw": null,
         "display": null,
         "missing": [
-          "A",
           "H",
           "S",
           "E",
           "U"
         ],
+        "components": {
+          "A": 99.9569816036936,
+          "H": null,
+          "S": null,
+          "E": null,
+          "U": null
+        },
         "message": "Missing information to compute the overall score"
       }
     },
@@ -3467,6 +4254,7 @@
       "indicators": {
         "H": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "data",
@@ -3483,6 +4271,7 @@
         },
         "S": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "model",
@@ -3492,7 +4281,7 @@
             {
               "kind": "data",
               "item": "Soil organic carbon, bulk density, coarse fragments, clay by layer",
-              "note": "SoilGrids rasters not downloaded"
+              "note": "SoilGrids profile now available for the pilot point; RothC inputs still missing"
             },
             {
               "kind": "data",
@@ -3504,6 +4293,7 @@
         },
         "E": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "data",
@@ -3525,6 +4315,7 @@
         },
         "U": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "data",
@@ -3546,6 +4337,7 @@
         },
         "A": {
           "status": "provisional",
+          "score": 99.48963911434649,
           "missing": [],
           "conditions": [
             "Rainfed confirmed: irrigation = 0 mm",
@@ -3576,6 +4368,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3600,6 +4394,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3624,6 +4420,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3635,7 +4433,7 @@
             {
               "startYear": 2006,
               "status": "ok",
-              "A": 98.27132120267197,
+              "A": 98.00664283330883,
               "reason": null,
               "cycles": [
                 {
@@ -3656,6 +4454,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3680,6 +4480,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3688,14 +4490,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 342.800394858526,
+                  "etaSum": 340.3898082127296,
                   "etmSum": 358.8663316743294,
-                  "dpSum": 664.6786972928695,
+                  "dpSum": 667.0892839386659,
                   "drEnd": 0.8284107672409533,
                   "water": {
-                    "fraction": 0.9485161306384665,
+                    "fraction": 0.940791319481811,
                     "clipped": false,
-                    "score": 94.90309693320819
+                    "score": 94.1383406286993
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 1011.0720000000005,
@@ -3704,10 +4506,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9485161306384665,
-                  "waterScore": 94.90309693320819,
+                  "waterFraction": 0.940791319481811,
+                  "waterScore": 94.1383406286993,
                   "clipped": false
                 }
               ]
@@ -3715,7 +4519,7 @@
             {
               "startYear": 2007,
               "status": "ok",
-              "A": 99.9611715700877,
+              "A": 99.9569816036936,
               "reason": null,
               "cycles": [
                 {
@@ -3736,6 +4540,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3744,14 +4550,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 394.90124097307364,
+                  "etaSum": 394.8611239785331,
                   "etmSum": 395.27316528439223,
-                  "dpSum": 734.8155679478434,
+                  "dpSum": 734.855684942384,
                   "drEnd": 1.581580098019117,
                   "water": {
-                    "fraction": 0.9988238377153336,
+                    "fraction": 0.998696972935278,
                     "clipped": false,
-                    "score": 99.88355993381802
+                    "score": 99.87100032059253
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 1129.5760000000005,
@@ -3760,10 +4566,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9988238377153336,
-                  "waterScore": 99.88355993381802,
+                  "waterFraction": 0.998696972935278,
+                  "waterScore": 99.87100032059253,
                   "clipped": false
                 },
                 {
@@ -3784,6 +4592,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3795,19 +4605,19 @@
             {
               "startYear": 2008,
               "status": "ok",
-              "A": 98.27132120267197,
+              "A": 98.00664283330883,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 342.800394858526,
+                  "etaSum": 340.3898082127296,
                   "etmSum": 358.8663316743294,
-                  "dpSum": 624.100015908715,
+                  "dpSum": 626.5106025545114,
                   "drEnd": 0.8284107672409533,
                   "water": {
-                    "fraction": 0.9485161306384665,
+                    "fraction": 0.940791319481811,
                     "clipped": false,
-                    "score": 94.90309693320819
+                    "score": 94.1383406286993
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 1011.0720000000005,
@@ -3816,10 +4626,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9485161306384665,
-                  "waterScore": 94.90309693320819,
+                  "waterFraction": 0.940791319481811,
+                  "waterScore": 94.1383406286993,
                   "clipped": false
                 },
                 {
@@ -3840,6 +4652,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3864,6 +4678,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3896,6 +4712,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3920,6 +4738,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -3944,6 +4764,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -3976,6 +4798,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4000,6 +4824,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4024,6 +4850,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4035,7 +4863,7 @@
             {
               "startYear": 2011,
               "status": "ok",
-              "A": 99.99391605948672,
+              "A": 99.9505382048356,
               "reason": null,
               "cycles": [
                 {
@@ -4056,6 +4884,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4080,6 +4910,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4088,14 +4920,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 352.8574604060046,
+                  "etaSum": 352.4542943507068,
                   "etmSum": 352.91403424960293,
-                  "dpSum": 387.44054083666003,
+                  "dpSum": 387.8437068919577,
                   "drEnd": 7.537881459139101,
                   "water": {
-                    "fraction": 0.9998156493825007,
+                    "fraction": 0.9985018989543595,
                     "clipped": false,
-                    "score": 99.98174928886756
+                    "score": 99.85168799648159
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 743.9599999999999,
@@ -4104,10 +4936,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9998156493825007,
-                  "waterScore": 99.98174928886756,
+                  "waterFraction": 0.9985018989543595,
+                  "waterScore": 99.85168799648159,
                   "clipped": false
                 }
               ]
@@ -4115,7 +4949,7 @@
             {
               "startYear": 2012,
               "status": "ok",
-              "A": 99.74758841179113,
+              "A": 99.53473490030352,
               "reason": null,
               "cycles": [
                 {
@@ -4136,6 +4970,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4160,6 +4996,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4168,14 +5006,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 369.52584398937336,
+                  "etaSum": 367.4543557879986,
                   "etmSum": 371.99379499785226,
-                  "dpSum": 315.25131358614914,
+                  "dpSum": 317.3228017875238,
                   "drEnd": 3.2191338796689166,
                   "water": {
-                    "fraction": 0.9923704542981231,
+                    "fraction": 0.9859665533094126,
                     "clipped": false,
-                    "score": 99.24467497551419
+                    "score": 98.61068877763185
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 689.6640000000001,
@@ -4184,10 +5022,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9923704542981231,
-                  "waterScore": 99.24467497551419,
+                  "waterFraction": 0.9859665533094126,
+                  "waterScore": 98.61068877763185,
                   "clipped": false
                 }
               ]
@@ -4195,19 +5035,19 @@
             {
               "startYear": 2013,
               "status": "ok",
-              "A": 97.49599154777975,
+              "A": 97.14717555768168,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 352.8574604060046,
+                  "etaSum": 352.4542943507068,
                   "etmSum": 352.91403424960293,
-                  "dpSum": 353.64042105313445,
+                  "dpSum": 354.0435871084321,
                   "drEnd": 7.537881459139101,
                   "water": {
-                    "fraction": 0.9998156493825007,
+                    "fraction": 0.9985018989543595,
                     "clipped": false,
-                    "score": 99.98174928886756
+                    "score": 99.85168799648159
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 743.9599999999999,
@@ -4216,10 +5056,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9998156493825007,
-                  "waterScore": 99.98174928886756,
+                  "waterFraction": 0.9985018989543595,
+                  "waterScore": 99.85168799648159,
                   "clipped": false
                 },
                 {
@@ -4240,6 +5082,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4248,14 +5092,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 385.0493488381919,
+                  "etaSum": 381.89830118179395,
                   "etmSum": 411.46313841850304,
-                  "dpSum": 161.56309136034008,
+                  "dpSum": 164.71413901673793,
                   "drEnd": 1.608051920948597,
                   "water": {
-                    "fraction": 0.9261759920120421,
+                    "fraction": 0.9173691160941028,
                     "clipped": false,
-                    "score": 92.69142320919217
+                    "score": 91.81954249331618
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 546.376,
@@ -4264,10 +5108,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9261759920120421,
-                  "waterScore": 92.69142320919217,
+                  "waterFraction": 0.9173691160941028,
+                  "waterScore": 91.81954249331618,
                   "clipped": false
                 }
               ]
@@ -4275,19 +5121,19 @@
             {
               "startYear": 2014,
               "status": "ok",
-              "A": 99.6848253811541,
+              "A": 99.44454332838944,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 369.52584398937336,
+                  "etaSum": 367.4543557879986,
                   "etmSum": 371.99379499785226,
-                  "dpSum": 278.3572898902957,
+                  "dpSum": 280.4287780916704,
                   "drEnd": 3.2191338796689166,
                   "water": {
-                    "fraction": 0.9923704542981231,
+                    "fraction": 0.9859665533094126,
                     "clipped": false,
-                    "score": 99.24467497551419
+                    "score": 98.61068877763185
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 689.6640000000001,
@@ -4296,22 +5142,24 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9923704542981231,
-                  "waterScore": 99.24467497551419,
+                  "waterFraction": 0.9859665533094126,
+                  "waterScore": 98.61068877763185,
                   "clipped": false
                 },
                 {
                   "status": "ok",
-                  "etaSum": 463.8744579237664,
+                  "etaSum": 463.56306013588915,
                   "etmSum": 464.5826764210781,
-                  "dpSum": 149.03067383405494,
+                  "dpSum": 149.34207162193218,
                   "drEnd": 1.3082656374903365,
                   "water": {
-                    "fraction": 0.9980944766850556,
+                    "fraction": 0.9972566339186288,
                     "clipped": false,
-                    "score": 99.8113531918205
+                    "score": 99.72840675794426
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 614.8159999999999,
@@ -4320,10 +5168,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9980944766850556,
-                  "waterScore": 99.8113531918205,
+                  "waterFraction": 0.9972566339186288,
+                  "waterScore": 99.72840675794426,
                   "clipped": false
                 },
                 {
@@ -4344,6 +5194,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4355,19 +5207,19 @@
             {
               "startYear": 2015,
               "status": "ok",
-              "A": 97.50192350680524,
+              "A": 97.19525007318244,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 385.0493488381919,
+                  "etaSum": 381.89830118179395,
                   "etmSum": 411.46313841850304,
-                  "dpSum": 117.9347030827568,
+                  "dpSum": 121.08575073915465,
                   "drEnd": 1.608051920948597,
                   "water": {
-                    "fraction": 0.9261759920120421,
+                    "fraction": 0.9173691160941028,
                     "clipped": false,
-                    "score": 92.69142320919217
+                    "score": 91.81954249331618
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 546.376,
@@ -4376,10 +5228,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9261759920120421,
-                  "waterScore": 92.69142320919217,
+                  "waterFraction": 0.9173691160941028,
+                  "waterScore": 91.81954249331618,
                   "clipped": false
                 },
                 {
@@ -4400,6 +5254,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4424,6 +5280,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4435,7 +5293,7 @@
             {
               "startYear": 2016,
               "status": "ok",
-              "A": 98.05524030818499,
+              "A": 97.74943362208238,
               "reason": null,
               "cycles": [
                 {
@@ -4456,6 +5314,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4480,6 +5340,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4488,14 +5350,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 403.90010096823215,
+                  "etaSum": 400.61545403884196,
                   "etmSum": 425.2722322424939,
-                  "dpSum": 153.89748719809324,
+                  "dpSum": 157.18213412748344,
                   "drEnd": 1.1246535208555457,
                   "water": {
-                    "fraction": 0.9422065465318543,
+                    "fraction": 0.9333243678180445,
                     "clipped": false,
-                    "score": 94.27844810665357
+                    "score": 93.3991124139864
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 557.76,
@@ -4504,10 +5366,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9422065465318543,
-                  "waterScore": 94.27844810665357,
+                  "waterFraction": 0.9333243678180445,
+                  "waterScore": 93.3991124139864,
                   "clipped": false
                 }
               ]
@@ -4515,7 +5379,7 @@
             {
               "startYear": 2017,
               "status": "ok",
-              "A": 97.61895115476116,
+              "A": 97.3303942065177,
               "reason": null,
               "cycles": [
                 {
@@ -4536,6 +5400,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4560,6 +5426,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4568,14 +5436,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 406.39121182628827,
+                  "etaSum": 403.263674651332,
                   "etmSum": 432.9112145648222,
-                  "dpSum": 70.28731849350258,
+                  "dpSum": 73.41485566845877,
                   "drEnd": 1.4051213915023055,
                   "water": {
-                    "fraction": 0.9295513672937031,
+                    "fraction": 0.9212432717069089,
                     "clipped": false,
-                    "score": 93.02558536207661
+                    "score": 92.20308389898398
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 476.07200000000006,
@@ -4584,10 +5452,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9295513672937031,
-                  "waterScore": 93.02558536207661,
+                  "waterFraction": 0.9212432717069089,
+                  "waterScore": 92.20308389898398,
                   "clipped": false
                 }
               ]
@@ -4595,19 +5465,19 @@
             {
               "startYear": 2018,
               "status": "ok",
-              "A": 95.25867559076376,
+              "A": 94.77095554146067,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 376.64993893873424,
+                  "etaSum": 372.885533988929,
                   "etmSum": 425.2722322424939,
-                  "dpSum": 137.23471458212123,
+                  "dpSum": 140.99911953192645,
                   "drEnd": 1.1246535208555457,
                   "water": {
-                    "fraction": 0.8685180149090006,
+                    "fraction": 0.8583384984391655,
                     "clipped": false,
-                    "score": 86.98328347599106
+                    "score": 85.97551134547739
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 557.76,
@@ -4616,22 +5486,24 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.8685180149090006,
-                  "waterScore": 86.98328347599106,
+                  "waterFraction": 0.8583384984391655,
+                  "waterScore": 85.97551134547739,
                   "clipped": false
                 },
                 {
                   "status": "ok",
-                  "etaSum": 478.25763833106294,
+                  "etaSum": 476.8144201422286,
                   "etmSum": 480.6847363391557,
-                  "dpSum": 134.25167974397587,
+                  "dpSum": 135.6948979328101,
                   "drEnd": 2.041971595894381,
                   "water": {
-                    "fraction": 0.9936884359315804,
+                    "fraction": 0.9899354090520873,
                     "clipped": false,
-                    "score": 99.37515515722646
+                    "score": 99.00360549615664
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 611.5920000000001,
@@ -4640,10 +5512,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9936884359315804,
-                  "waterScore": 99.37515515722646,
+                  "waterFraction": 0.9899354090520873,
+                  "waterScore": 99.00360549615664,
                   "clipped": false
                 },
                 {
@@ -4664,6 +5538,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4675,19 +5551,19 @@
             {
               "startYear": 2019,
               "status": "ok",
-              "A": 97.55543655220087,
+              "A": 97.19582217764993,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 405.7012162344764,
+                  "etaSum": 401.81143525710877,
                   "etmSum": 432.9112145648222,
-                  "dpSum": 26.775905157026017,
+                  "dpSum": 30.66568613439361,
                   "drEnd": 1.4051213915023055,
                   "water": {
-                    "fraction": 0.9277184396542996,
+                    "fraction": 0.9173854938366001,
                     "clipped": false,
-                    "score": 92.84412552577565
+                    "score": 91.82116388982341
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 476.07200000000006,
@@ -4696,10 +5572,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9277184396542996,
-                  "waterScore": 92.84412552577565,
+                  "waterFraction": 0.9173854938366001,
+                  "waterScore": 91.82116388982341,
                   "clipped": false
                 },
                 {
@@ -4720,6 +5598,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4744,6 +5624,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4776,6 +5658,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4800,6 +5684,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4824,6 +5710,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4856,6 +5744,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4880,6 +5770,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4904,6 +5796,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4936,6 +5830,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4960,6 +5856,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -4984,6 +5882,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -4994,8 +5894,8 @@
             }
           ],
           "summary": {
-            "medianA": 99.71620689647261,
-            "p10": 97.5001439190976,
+            "medianA": 99.48963911434649,
+            "p10": 97.18082771853221,
             "p90": 100.0,
             "validBlocks": 18,
             "totalBlocks": 18,
@@ -5007,12 +5907,18 @@
         "raw": null,
         "display": null,
         "missing": [
-          "A",
           "H",
           "S",
           "E",
           "U"
         ],
+        "components": {
+          "A": 99.48963911434649,
+          "H": null,
+          "S": null,
+          "E": null,
+          "U": null
+        },
         "message": "Missing information to compute the overall score"
       }
     },
@@ -5028,6 +5934,7 @@
       "indicators": {
         "H": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "data",
@@ -5044,6 +5951,7 @@
         },
         "S": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "model",
@@ -5053,7 +5961,7 @@
             {
               "kind": "data",
               "item": "Soil organic carbon, bulk density, coarse fragments, clay by layer",
-              "note": "SoilGrids rasters not downloaded"
+              "note": "SoilGrids profile now available for the pilot point; RothC inputs still missing"
             },
             {
               "kind": "data",
@@ -5065,6 +5973,7 @@
         },
         "E": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "data",
@@ -5086,6 +5995,7 @@
         },
         "U": {
           "status": "pending",
+          "score": null,
           "missing": [
             {
               "kind": "data",
@@ -5107,6 +6017,7 @@
         },
         "A": {
           "status": "provisional",
+          "score": 99.9784908018468,
           "missing": [],
           "conditions": [
             "Rainfed confirmed: irrigation = 0 mm",
@@ -5137,6 +6048,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -5161,6 +6074,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5185,6 +6100,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5196,7 +6113,7 @@
             {
               "startYear": 2006,
               "status": "ok",
-              "A": 99.9611715700877,
+              "A": 99.9569816036936,
               "reason": null,
               "cycles": [
                 {
@@ -5217,6 +6134,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -5241,6 +6160,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5249,14 +6170,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 394.90124097307364,
+                  "etaSum": 394.8611239785331,
                   "etmSum": 395.27316528439223,
-                  "dpSum": 731.8350205090999,
+                  "dpSum": 731.8751375036404,
                   "drEnd": 1.581580098019117,
                   "water": {
-                    "fraction": 0.9988238377153336,
+                    "fraction": 0.998696972935278,
                     "clipped": false,
-                    "score": 99.88355993381802
+                    "score": 99.87100032059253
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 1129.5760000000005,
@@ -5265,10 +6186,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9988238377153336,
-                  "waterScore": 99.88355993381802,
+                  "waterFraction": 0.998696972935278,
+                  "waterScore": 99.87100032059253,
                   "clipped": false
                 }
               ]
@@ -5276,7 +6199,7 @@
             {
               "startYear": 2007,
               "status": "ok",
-              "A": 99.9611715700877,
+              "A": 99.9569816036936,
               "reason": null,
               "cycles": [
                 {
@@ -5297,6 +6220,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -5305,14 +6230,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 394.90124097307364,
+                  "etaSum": 394.8611239785331,
                   "etmSum": 395.27316528439223,
-                  "dpSum": 734.8155679478434,
+                  "dpSum": 734.855684942384,
                   "drEnd": 1.581580098019117,
                   "water": {
-                    "fraction": 0.9988238377153336,
+                    "fraction": 0.998696972935278,
                     "clipped": false,
-                    "score": 99.88355993381802
+                    "score": 99.87100032059253
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 1129.5760000000005,
@@ -5321,10 +6246,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9988238377153336,
-                  "waterScore": 99.88355993381802,
+                  "waterFraction": 0.998696972935278,
+                  "waterScore": 99.87100032059253,
                   "clipped": false
                 },
                 {
@@ -5345,6 +6272,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5356,19 +6285,19 @@
             {
               "startYear": 2008,
               "status": "ok",
-              "A": 98.27132120267197,
+              "A": 98.00664283330883,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 342.800394858526,
+                  "etaSum": 340.3898082127296,
                   "etmSum": 358.8663316743294,
-                  "dpSum": 624.100015908715,
+                  "dpSum": 626.5106025545114,
                   "drEnd": 0.8284107672409533,
                   "water": {
-                    "fraction": 0.9485161306384665,
+                    "fraction": 0.940791319481811,
                     "clipped": false,
-                    "score": 94.90309693320819
+                    "score": 94.1383406286993
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 1011.0720000000005,
@@ -5377,10 +6306,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9485161306384665,
-                  "waterScore": 94.90309693320819,
+                  "waterFraction": 0.940791319481811,
+                  "waterScore": 94.1383406286993,
                   "clipped": false
                 },
                 {
@@ -5401,6 +6332,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5425,6 +6358,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5457,6 +6392,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -5481,6 +6418,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5505,6 +6444,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5537,6 +6478,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -5561,6 +6504,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5585,6 +6530,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5617,6 +6564,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -5641,6 +6590,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5665,6 +6616,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5697,6 +6650,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -5721,6 +6676,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5745,6 +6702,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5756,19 +6715,19 @@
             {
               "startYear": 2013,
               "status": "ok",
-              "A": 99.9309980349301,
+              "A": 99.85996986039393,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 352.8574604060046,
+                  "etaSum": 352.4542943507068,
                   "etmSum": 352.91403424960293,
-                  "dpSum": 353.64042105313445,
+                  "dpSum": 354.0435871084321,
                   "drEnd": 7.537881459139101,
                   "water": {
-                    "fraction": 0.9998156493825007,
+                    "fraction": 0.9985018989543595,
                     "clipped": false,
-                    "score": 99.98174928886756
+                    "score": 99.85168799648159
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 743.9599999999999,
@@ -5777,10 +6736,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9998156493825007,
-                  "waterScore": 99.98174928886756,
+                  "waterFraction": 0.9985018989543595,
+                  "waterScore": 99.85168799648159,
                   "clipped": false
                 },
                 {
@@ -5801,6 +6762,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5809,14 +6772,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 463.8744579237664,
+                  "etaSum": 463.56306013588915,
                   "etmSum": 464.5826764210781,
-                  "dpSum": 150.8781959913072,
+                  "dpSum": 151.18959377918443,
                   "drEnd": 1.3082656374903365,
                   "water": {
-                    "fraction": 0.9980944766850556,
+                    "fraction": 0.9972566339186288,
                     "clipped": false,
-                    "score": 99.8113531918205
+                    "score": 99.72840675794426
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 614.8159999999999,
@@ -5825,10 +6788,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9980944766850556,
-                  "waterScore": 99.8113531918205,
+                  "waterFraction": 0.9972566339186288,
+                  "waterScore": 99.72840675794426,
                   "clipped": false
                 }
               ]
@@ -5836,19 +6801,19 @@
             {
               "startYear": 2014,
               "status": "ok",
-              "A": 99.6848253811541,
+              "A": 99.44454332838944,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 369.52584398937336,
+                  "etaSum": 367.4543557879986,
                   "etmSum": 371.99379499785226,
-                  "dpSum": 278.3572898902957,
+                  "dpSum": 280.4287780916704,
                   "drEnd": 3.2191338796689166,
                   "water": {
-                    "fraction": 0.9923704542981231,
+                    "fraction": 0.9859665533094126,
                     "clipped": false,
-                    "score": 99.24467497551419
+                    "score": 98.61068877763185
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 689.6640000000001,
@@ -5857,22 +6822,24 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9923704542981231,
-                  "waterScore": 99.24467497551419,
+                  "waterFraction": 0.9859665533094126,
+                  "waterScore": 98.61068877763185,
                   "clipped": false
                 },
                 {
                   "status": "ok",
-                  "etaSum": 463.8744579237664,
+                  "etaSum": 463.56306013588915,
                   "etmSum": 464.5826764210781,
-                  "dpSum": 149.03067383405494,
+                  "dpSum": 149.34207162193218,
                   "drEnd": 1.3082656374903365,
                   "water": {
-                    "fraction": 0.9980944766850556,
+                    "fraction": 0.9972566339186288,
                     "clipped": false,
-                    "score": 99.8113531918205
+                    "score": 99.72840675794426
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 614.8159999999999,
@@ -5881,10 +6848,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9980944766850556,
-                  "waterScore": 99.8113531918205,
+                  "waterFraction": 0.9972566339186288,
+                  "waterScore": 99.72840675794426,
                   "clipped": false
                 },
                 {
@@ -5905,6 +6874,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5916,19 +6887,19 @@
             {
               "startYear": 2015,
               "status": "ok",
-              "A": 97.50192350680524,
+              "A": 97.19525007318244,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 385.0493488381919,
+                  "etaSum": 381.89830118179395,
                   "etmSum": 411.46313841850304,
-                  "dpSum": 117.9347030827568,
+                  "dpSum": 121.08575073915465,
                   "drEnd": 1.608051920948597,
                   "water": {
-                    "fraction": 0.9261759920120421,
+                    "fraction": 0.9173691160941028,
                     "clipped": false,
-                    "score": 92.69142320919217
+                    "score": 91.81954249331618
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 546.376,
@@ -5937,10 +6908,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9261759920120421,
-                  "waterScore": 92.69142320919217,
+                  "waterFraction": 0.9173691160941028,
+                  "waterScore": 91.81954249331618,
                   "clipped": false
                 },
                 {
@@ -5961,6 +6934,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -5985,6 +6960,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6017,6 +6994,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -6041,6 +7020,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6065,6 +7046,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6076,7 +7059,7 @@
             {
               "startYear": 2017,
               "status": "ok",
-              "A": 99.79128306121298,
+              "A": 99.66675923820534,
               "reason": null,
               "cycles": [
                 {
@@ -6097,6 +7080,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -6121,6 +7106,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6129,14 +7116,14 @@
                 },
                 {
                   "status": "ok",
-                  "etaSum": 478.25763833106294,
+                  "etaSum": 476.8144201422286,
                   "etmSum": 480.6847363391557,
-                  "dpSum": 134.57774219311975,
+                  "dpSum": 136.02096038195398,
                   "drEnd": 2.041971595894381,
                   "water": {
-                    "fraction": 0.9936884359315804,
+                    "fraction": 0.9899354090520873,
                     "clipped": false,
-                    "score": 99.37515515722646
+                    "score": 99.00360549615664
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 611.5920000000001,
@@ -6145,10 +7132,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9936884359315804,
-                  "waterScore": 99.37515515722646,
+                  "waterFraction": 0.9899354090520873,
+                  "waterScore": 99.00360549615664,
                   "clipped": false
                 }
               ]
@@ -6156,19 +7145,19 @@
             {
               "startYear": 2018,
               "status": "ok",
-              "A": 95.25867559076376,
+              "A": 94.77095554146067,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 376.64993893873424,
+                  "etaSum": 372.885533988929,
                   "etmSum": 425.2722322424939,
-                  "dpSum": 137.23471458212123,
+                  "dpSum": 140.99911953192645,
                   "drEnd": 1.1246535208555457,
                   "water": {
-                    "fraction": 0.8685180149090006,
+                    "fraction": 0.8583384984391655,
                     "clipped": false,
-                    "score": 86.98328347599106
+                    "score": 85.97551134547739
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 557.76,
@@ -6177,22 +7166,24 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.8685180149090006,
-                  "waterScore": 86.98328347599106,
+                  "waterFraction": 0.8583384984391655,
+                  "waterScore": 85.97551134547739,
                   "clipped": false
                 },
                 {
                   "status": "ok",
-                  "etaSum": 478.25763833106294,
+                  "etaSum": 476.8144201422286,
                   "etmSum": 480.6847363391557,
-                  "dpSum": 134.25167974397587,
+                  "dpSum": 135.6948979328101,
                   "drEnd": 2.041971595894381,
                   "water": {
-                    "fraction": 0.9936884359315804,
+                    "fraction": 0.9899354090520873,
                     "clipped": false,
-                    "score": 99.37515515722646
+                    "score": 99.00360549615664
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 611.5920000000001,
@@ -6201,10 +7192,12 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
-                  "waterFraction": 0.9936884359315804,
-                  "waterScore": 99.37515515722646,
+                  "waterFraction": 0.9899354090520873,
+                  "waterScore": 99.00360549615664,
                   "clipped": false
                 },
                 {
@@ -6225,6 +7218,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6236,19 +7231,19 @@
             {
               "startYear": 2019,
               "status": "ok",
-              "A": 97.55543655220087,
+              "A": 97.19582217764993,
               "reason": null,
               "cycles": [
                 {
                   "status": "ok",
-                  "etaSum": 405.7012162344764,
+                  "etaSum": 401.81143525710877,
                   "etmSum": 432.9112145648222,
-                  "dpSum": 26.775905157026017,
+                  "dpSum": 30.66568613439361,
                   "drEnd": 1.4051213915023055,
                   "water": {
-                    "fraction": 0.9277184396542996,
+                    "fraction": 0.9173854938366001,
                     "clipped": false,
-                    "score": 92.84412552577565
+                    "score": 91.82116388982341
                   },
                   "irrigationMm": 0.0,
                   "precipAdjustedMm": 476.07200000000006,
@@ -6257,10 +7252,12 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
-                  "waterFraction": 0.9277184396542996,
-                  "waterScore": 92.84412552577565,
+                  "waterFraction": 0.9173854938366001,
+                  "waterScore": 91.82116388982341,
                   "clipped": false
                 },
                 {
@@ -6281,6 +7278,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6305,6 +7304,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6337,6 +7338,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -6361,6 +7364,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6385,6 +7390,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6417,6 +7424,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -6441,6 +7450,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6465,6 +7476,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6497,6 +7510,8 @@
                   "cropId": "bean",
                   "ky": 1.15,
                   "rootDepthM": 0.6,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 90.0,
                   "waterFraction": 1.0,
@@ -6521,6 +7536,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6545,6 +7562,8 @@
                   "cropId": "maize",
                   "ky": 1.25,
                   "rootDepthM": 1.0,
+                  "thetaFCEffective": 0.3,
+                  "thetaWPEffective": 0.15,
                   "awcMmPerM": 150.0,
                   "tawMm": 150.0,
                   "waterFraction": 1.0,
@@ -6555,8 +7574,8 @@
             }
           ],
           "summary": {
-            "medianA": 99.98058578504384,
-            "p10": 97.53938263858218,
+            "medianA": 99.9784908018468,
+            "p10": 97.19565054630968,
             "p90": 100.0,
             "validBlocks": 18,
             "totalBlocks": 18,
@@ -6568,12 +7587,18 @@
         "raw": null,
         "display": null,
         "missing": [
-          "A",
           "H",
           "S",
           "E",
           "U"
         ],
+        "components": {
+          "A": 99.9784908018468,
+          "H": null,
+          "S": null,
+          "E": null,
+          "U": null
+        },
         "message": "Missing information to compute the overall score"
       }
     }

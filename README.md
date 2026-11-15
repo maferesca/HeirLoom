@@ -27,3 +27,6 @@ See `METHODS.md`, `DATA_SOURCES.md`, `LIMITATIONS.md`, `VALIDATION.md`, `JUDGING
 
 ## Update: farmer answers wired to the engine
 History (with intercrops flagged, not converted), usual date + planting window, rainfed/irrigated with irrigation simulated when dates, depth and interval are known, allowed crops, management and priority, optional soil in the technical detail (illustrative demo values are labelled). H, S, E, U remain pending, each with the missing data/source/model listed; the overall score stays null. See `VERIFICATION_CARRANZA.md` to reproduce the verification case.
+
+## Update: audit follow-up (engine 0.4.0)
+Global score now reads the real indicators (missing: H, S, E, U); Ks uses the previous day's depletion; alternatives are screened with a reason per option (water and family/pests shown as not evaluated); equipment/seed/market restrictions are filters; soil can come from SoilGrids + a published pedotransfer function, kept apart from farmer values and demo values. Status list: `AUDIT_REQUIREMENTS.md`.

@@ -39,7 +39,7 @@ base, rain80 = go(precipScale=1.0), go(precipScale=0.8)
 
 print("NASA cell:", eff, "| elevation used:", base["elevationUsedM"], "m")
 c0 = base["rotations"][0]["indicators"]["A"]["blocks"][0]["cycles"][0]
-print(f"[1] AWC = {base['soil']['awcMmPerM']:.1f} mm/m | maize Zr={c0['rootDepthM']} m -> TAW={c0['tawMm']:.1f} mm")
+print(f"[1] AWC = {base['soil']['sources']['demo']['awcMmPerM']:.1f} mm/m | maize Zr={c0['rootDepthM']} m -> TAW={c0['tawMm']:.1f} mm")
 for name, r in (("base", base), ("rain 80%", rain80)):
     s, b = stats(r)
     print(f"[2] {name}: median={s['medianA']:.4f} P10={s['p10']:.4f} P90={s['p90']:.4f} valid={s['validBlocks']}/{s['totalBlocks']}")
@@ -51,7 +51,7 @@ print(f"    delta median (adjusted - base, unrounded) = {sr['medianA'] - sb['med
 
 nb = go(allowedCrops=["maize"])
 print("[3a] allowed=maize only ->", [r["sequence"] for r in nb["rotations"]], "| history kept:", nb["rotations"][0]["sequence"])
-print("     limit:", nb["viableCrops"]["alternativesLimit"])
+print("     limit:", nb["viableCrops"]["notes"])
 for w in ({"startMonth": 5, "startDay": 15, "endMonth": 7, "endDay": 15}, {"startMonth": 6, "startDay": 10, "endMonth": 6, "endDay": 20}):
     r = go(window=w)
     print("[3b] window", w, "viable shifts:", [c["shiftDays"] for c in r["calendar"]["candidates"] if c["viable"]])
@@ -101,3 +101,51 @@ for tag, sc in (("100%", 1.0), ("80%", 0.8)):
     print(f"  rain {tag}: median={s['medianA']:.4f} P10={s['p10']:.4f}")
 for k, zr in orig.items():
     simulate.CATALOG["crops"][k]["rootDepthM"] = zr
+
+# ======================= audit follow-up (engine 0.4.0) =======================
+from heirloom.api import soil_profile_for  # noqa: E402
+
+print("\n[KS ORDER] depletion used for Ks: previous day (new default) vs after same-day wetting (previous behaviour)")
+for tag, sc in (("100%", 1.0), ("80%", 0.8)):
+    new = go(precipScale=sc)
+    old_json = json.loads((OUT / f"carranza_{'base' if sc == 1.0 else 'rain80'}_before_ks_order.json").read_text(encoding="utf-8"))
+    aft = go(precipScale=sc, ksTiming="after_wetting")
+    so = old_json["rotations"][0]["indicators"]["A"]["summary"]
+    sa = aft["rotations"][0]["indicators"]["A"]["summary"]
+    sn = new["rotations"][0]["indicators"]["A"]["summary"]
+    print(f"  rain {tag}: saved 0.3.0 run median={so['medianA']:.4f} P10={so['p10']:.4f} | rerun after_wetting median={sa['medianA']:.4f} P10={sa['p10']:.4f} (reproduces old: {abs(so['p10']-sa['p10'])<1e-9})")
+    bo = {b["startYear"]: b["A"] for b in old_json["rotations"][0]["indicators"]["A"]["blocks"]}
+    bn = {b["startYear"]: b["A"] for b in new["rotations"][0]["indicators"]["A"]["blocks"]}
+    ch = {y: (bo[y], bn[y]) for y in bo if abs(bo[y] - bn[y]) > 1e-9}
+    print(f"            previous_day (new) median={sn['medianA']:.4f} P10={sn['p10']:.4f} P90={sn['p90']:.4f} | blocks changed {len(ch)}/{len(bo)}")
+    for y, (a, b) in sorted(ch.items()):
+        print(f"              {y}: {a:.3f} -> {b:.3f} ({b - a:+.3f})")
+
+prof = soil_profile_for(LOC["lat"], LOC["lon"])
+print("\n[SOILGRIDS]", prof["status"], "effective:", prof.get("effective"), f"distance {prof.get('distanceM', 0):.0f} m", prof.get("qualityFlags"))
+if prof["status"] == "ok":
+    for L, H in zip(prof["layers"], prof["hydraulics"]["layers"]):
+        print(f"   {L['label']:>8}: clay {L['clay_pct']:.1f}% (Q05-Q95 {L['clay_pct_q05']:.1f}-{L['clay_pct_q95']:.1f}) sand {L['sand_pct']:.1f}% SOC {L['soc_g_kg']:.1f} g/kg"
+              f" -> OM {H['omPct']:.2f}%  FC {H['fc']:.3f}  WP {H['wp']:.3f}")
+    reg = {}
+    for tag, sc in (("100%", 1.0), ("80%", 0.8)):
+        r = compare.build_run(compare.CompareReq(**{**BASE, "soil": None, "soilIsDemo": False, "soilSource": "regional", "precipScale": sc}),
+                              series, manifests, elev, soil_profile=prof)
+        reg[tag] = r
+        s, b = stats(r)
+        c = b[0]["cycles"]
+        print(f"   regional soil, rain {tag}: median={s['medianA']:.4f} P10={s['p10']:.4f} P90={s['p90']:.4f} valid={s['validBlocks']}/{s['totalBlocks']}"
+              f" | maize AWC={c[0]['awcMmPerM']:.1f} mm/m TAW={c[0]['tawMm']:.1f} mm; bean AWC={c[1]['awcMmPerM']:.1f} mm/m TAW={c[1]['tawMm']:.1f} mm")
+    (OUT / "carranza_regional_soil_base.json").write_text(json.dumps(reg["100%"], indent=2), encoding="utf-8")
+    (OUT / "carranza_regional_soil_rain80.json").write_text(json.dumps(reg["80%"], indent=2), encoding="utf-8")
+(OUT / "carranza_base.json").write_text(json.dumps(base, indent=2), encoding="utf-8")
+(OUT / "carranza_rain80.json").write_text(json.dumps(rain80, indent=2), encoding="utf-8")
+
+print("\n[SCREENING] current practice maize->bean->maize, all crops allowed")
+for c in base["screening"]["candidates"]:
+    fails = [x["code"] for x in c["checks"] if x["status"] == "failed"]
+    print("  ", "->".join(c["sequence"]), c["decision"], fails or "")
+print("   not evaluated:", base["screening"]["notEvaluated"])
+nb = go(constraints={"noBuyer": ["bean"]})
+print("   noBuyer=[bean] ->", [c["sequence"] for c in nb["rotations"]], nb["viableCrops"]["blocked"])
+print("\n[OVERALL] ", {k: base["rotations"][0]["overall"][k] for k in ("raw", "display", "missing")})

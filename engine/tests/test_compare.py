@@ -48,14 +48,15 @@ def test_awc_and_root_depth_exported():
     assert cyc["rootDepthM"] == 1.0 and cyc["tawMm"] == pytest.approx(150.0)  # maize Zr 1.0 m
     bean = r["rotations"][0]["indicators"]["A"]["blocks"][0]["cycles"][1]
     assert bean["tawMm"] == pytest.approx(90.0)  # bean Zr 0.6 m
-    assert r["soil"]["awcMmPerM"] == pytest.approx(150.0) and r["soil"]["isDemoAssumption"]
+    assert r["soil"]["sources"]["demo"]["awcMmPerM"] == pytest.approx(150.0) and r["soil"]["isDemoAssumption"]
+    assert r["soil"]["sources"]["farmer"] is None and r["soil"]["sources"]["regional"] is None
 
 
 def test_exclude_bean_removes_alternatives_keeps_history():
     r = run(allowedCrops=["maize"])
     assert [x["id"] for x in r["rotations"]] == ["current"] or all("bean" not in (x["sequence"] or []) for x in r["rotations"][1:])
     assert r["rotations"][0]["sequence"] == ["maize", "bean", "maize"]  # real history still shown
-    assert r["viableCrops"]["alternativesLimit"]
+    assert r["viableCrops"]["notes"] and r["viableCrops"]["blocked"] == {"bean": ["not_allowed"]}
 
 
 def test_alternatives_default_two_with_bean():
@@ -156,10 +157,10 @@ def test_monoculture_label_and_explanation():
     alt = r["rotations"][1]
     assert alt["sequence"] == ["maize", "maize", "maize"] and alt["structure"] == "monoculture"
     assert r["rotations"][0]["structure"] == "rotation"
-    assert "no rotation" in r["viableCrops"]["alternativesLimit"][0]
+    assert r["viableCrops"]["notes"][0]["code"] == "single_crop_pool" and r["viableCrops"]["notes"][0]["params"]["alternative"]
 
 
 def test_monoculture_current_has_no_alternative_when_only_that_crop_allowed():
     r = run(history=[{"crops": ["maize"]}] * 3, allowedCrops=["maize"])
     assert len(r["rotations"]) == 1 and r["rotations"][0]["structure"] == "monoculture"
-    assert "no other viable sequence" in r["viableCrops"]["alternativesLimit"][0]
+    assert r["viableCrops"]["notes"][0]["code"] == "single_crop_pool" and not r["viableCrops"]["notes"][0]["params"]["alternative"]
