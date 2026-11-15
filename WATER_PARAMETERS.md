@@ -1,6 +1,6 @@
 # Water module parameters (maize and dry bean)
 
-Verified on 2026-11-14 by re-reading the FAO-56 web edition (Allen et al., 1998): Tables 11 and 12 at <https://www.fao.org/4/x0490e/x0490e0b.htm>, Tables 22 and 24 at <https://www.fao.org/4/x0490e/x0490e0e.htm>. The machine-readable copy with the same tags is `data/catalog.json` (a test checks that the documented values equal the values the engine uses).
+Verified on 2026-11-14 by re-reading the FAO-56 web edition (Allen et al., 1998): Tables 11 and 12 at <https://www.fao.org/4/x0490e/x0490e0b.htm>, Tables 22 and 24 at <https://www.fao.org/4/x0490e/x0490e0e.htm>. The machine-readable copy with the same tags is `engine/data/catalog.json` (a test checks that the documented values equal the values the engine uses).
 
 Type: **B** = bibliographic (value read from the table), **A** = pilot assumption (a choice Heirloom made).
 

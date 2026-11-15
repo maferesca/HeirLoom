@@ -33,7 +33,7 @@ Verification script (NASA POWER and SoilGrids, writes `data/verification/carranz
 .venv/Scripts/python scripts/verify_carranza.py
 ```
 
-In the app (`/es` or `/en`): press the case button → wait for the comparison (about 40 s the first time, SoilGrids is cached in `data/soilgrids/`) → move **Lluvia (%)** in the simulator → **Exportar JSON** (or "Exportar JSON" next to the title).
+In the app (`/es` or `/en`): press the case button → wait for the comparison (about 40 s the first time, SoilGrids is cached in `engine/data/soilgrids/`) → move **Lluvia (%)** in the simulator → **Exportar JSON** (or "Exportar JSON" next to the title).
 
 ## Reference exports and numbers (regional soil)
 Files: `data/verification/carranza_base.json` (rain 100 %) and `carranza_rain80.json` (rain 80 %), both with shift 0 days. 18 of 18 historical blocks valid.

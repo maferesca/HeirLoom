@@ -16,6 +16,7 @@ import json
 import math
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+import tempfile
 from pathlib import Path
 
 import httpx
@@ -25,7 +26,9 @@ PROPERTIES = ("clay", "sand", "silt", "soc", "bdod", "cfvo")
 DEPTHS = ("0-5cm", "5-15cm", "15-30cm", "30-60cm", "60-100cm")
 RADII_DEG = (0.0025, 0.005, 0.01, 0.015, 0.02, 0.03, 0.05)  # 0.0025 deg ~ 275 m
 MAX_RADIUS_DEG = RADII_DEG[-1]
-CACHE_DIR = Path(__file__).resolve().parents[3] / "data" / "soilgrids"
+# Bundled cache inside engine/ (ships with the deploy). On read-only hosts (Vercel) new profiles go to the temp dir.
+CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "soilgrids"
+TMP_CACHE_DIR = Path(tempfile.gettempdir()) / "heirloom-soilgrids"
 KEYMAP = {"clay": "clay_pct", "sand": "sand_pct", "silt": "silt_pct", "soc": "soc_g_kg", "bdod": "bdod_kg_dm3", "cfvo": "cfvo_pct"}
 
 
@@ -81,11 +84,12 @@ def _ring(lat: float, lon: float, r: float):
 def fetch_profile(lat: float, lon: float, use_cache: bool = True) -> dict:
     """Returns {status, layers, requested, effective, distanceM, qualityFlags, manifest} or status 'unavailable'."""
     key = f"{round(lat, 4)}_{round(lon, 4)}.json"
-    f = CACHE_DIR / key
-    if use_cache and f.exists():
-        out = json.loads(f.read_text(encoding="utf-8"))
-        out["fromCache"] = True
-        return out
+    if use_cache:
+        for f in (CACHE_DIR / key, TMP_CACHE_DIR / key):
+            if f.exists():
+                out = json.loads(f.read_text(encoding="utf-8"))
+                out["fromCache"] = True
+                return out
     requested = {"lat": lat, "lon": lon}
     flags: list[str] = []
     try:
@@ -125,8 +129,13 @@ def fetch_profile(lat: float, lon: float, use_cache: bool = True) -> dict:
                         "sourceType": "spatial_estimate", "spatialResolution": "250 m",
                         "license": "CC BY 4.0 (ISRIC); cite ISRIC - World Soil Information",
                         "note": "mean and Q0.05/Q0.95 per depth; units converted with the API d_factor"}}
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    f.write_text(json.dumps(out, indent=2), encoding="utf-8")
+    for d in (CACHE_DIR, TMP_CACHE_DIR):  # the bundled folder is read-only on serverless hosts
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+            (d / key).write_text(json.dumps(out, indent=2), encoding="utf-8")
+            break
+        except OSError:
+            continue
     return out
 
 

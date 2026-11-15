@@ -58,7 +58,7 @@ Functional indicators: still **1 of 5** (water). Weight of that indicator in the
 
 | # | Requirement | Before | Now | Evidence |
 |---|---|---|---|---|
-| M1 | Soil texture/profile from SoilGrids | Pendiente | **Parcial** | `providers/soilgrids.py`; live profile for the Carranza point (nearest valid cell, 556 m; the exact cell is masked); cached in `data/soilgrids/`. Parcial: nearest-cell substitute, 250 m, no propagated uncertainty |
+| M1 | Soil texture/profile from SoilGrids | Pendiente | **Parcial** | `providers/soilgrids.py`; live profile for the Carranza point (nearest valid cell, 556 m; the exact cell is masked); cached in `engine/data/soilgrids/`. Parcial: nearest-cell substitute, 250 m, no propagated uncertainty |
 | M2 | Farmer observations recorded and used | Parcial | Parcial | residues/cover still not used in calculations |
 | M3 | Documented method for field capacity and wilting point | Pendiente | **Cumple** | `ptf.py` Saxton & Rawls (2006); coefficients checked against two independent published implementations; reference test (unit) and Carranza profile (real). Caveat: poor coverage of Vertisols; no gravel correction |
 | M4 | Demo soil values labelled as editable assumptions | Cumple | Cumple | now one of three separate sources (`soil.sources`) |

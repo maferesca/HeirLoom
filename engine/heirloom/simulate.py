@@ -8,7 +8,9 @@ from pathlib import Path
 
 from . import eto as eto_mod, water, scoring
 
-CATALOG = json.loads((Path(__file__).resolve().parents[2] / "data" / "catalog.json").read_text(encoding="utf-8"))
+# engine/data/catalog.json: kept inside engine/ so a deploy rooted at engine/ (e.g. Vercel) ships it
+CATALOG_PATH = Path(__file__).resolve().parents[1] / "data" / "catalog.json"
+CATALOG = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
 
 
 def kc_curve(crop: dict) -> list[float]:
