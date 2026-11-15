@@ -7,14 +7,14 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
 from . import ptf, scoring, screening, simulate, water
 
-ENGINE_VERSION = "0.4.0"
+ENGINE_VERSION = "0.6.1"
 INDICATORS = ("A", "H", "S", "E", "U")
 
 
@@ -65,6 +65,7 @@ class Management(BaseModel):
     coverCrop: Optional[bool] = None
     waterlogging: Optional[bool] = None
     runoff: Optional[bool] = None
+    soilFeel: Literal["gritty", "smooth", "sticky", "unknown"] = "unknown"  # moistened soil rubbed between the fingers
     priority: Optional[Literal["water", "soil", "margin"]] = None
     areaHa: Optional[float] = None
     ownCostsMxnPerHa: Optional[float] = None
@@ -143,6 +144,27 @@ def overall_from_indicators(indicators: dict) -> dict:
     return out
 
 
+def _timeline(seq: Optional[list[str]], plant_md: tuple[int, int], has_window: bool, shift_days: int = 0) -> dict:
+    """Calendar of each cycle from the catalog cycle length and the usual planting date.
+
+    gap = days between the end of a cycle and the next planting (same date next year)."""
+    cat = simulate.CATALOG["crops"]
+    if seq is None:
+        return {"status": "unavailable",
+                "missing": [_missing("data", "One crop per cycle (crops sown together cannot be placed on a timeline)")]}
+    cycles = []
+    for j, c in enumerate(seq):
+        days = sum(cat[c]["cycleDays"].values())
+        plant = date(2001, plant_md[0], plant_md[1])
+        harvest = plant + timedelta(days=days)
+        cyc = {"crop": c, "plant": [plant.month, plant.day], "harvest": [harvest.month, harvest.day], "cycleDays": days}
+        if j < len(seq) - 1:
+            cyc.update({"gapDays": 365 - days, "gapFrom": [harvest.month, harvest.day], "gapTo": [plant.month, plant.day]})
+        cycles.append(cyc)
+    return {"status": "ok", "basis": "usual_date_with_window" if has_window else "simulation_date",
+            "shiftDays": shift_days, "cycles": cycles}
+
+
 def _irrigation_state(req: CompareReq):
     """Returns (irrigation dict or None, status, conditions, missing)."""
     reg = req.waterRegime
@@ -163,6 +185,27 @@ def _irrigation_state(req: CompareReq):
         return None, "conditional", ["Irrigation declared but incomplete: simulated without irrigation; water result is conditional"], need
     return irr.model_dump(), "applied", [
         f"Irrigation applied: {irr.applicationMm} mm every {irr.intervalDays} d inside the window; infrastructure and cost not modeled"], []
+
+
+WET_WARNING = "You observe runoff/waterlogging: the model assumes RO=0 and CR=0, so water results may be optimistic."
+FEEL_LABEL = {"gritty": "gritty", "smooth": "smooth", "sticky": "sticky"}
+
+
+def _observations(m: Management) -> list[dict]:
+    """What the farmer observed on the plot. Recorded separately from any soil VALUE: they never change
+    field capacity or wilting point. Observations that match a model limitation name the warning they trigger."""
+    out: list[dict] = []
+    if m.soilFeel != "unknown":
+        out.append({"type": "soil_texture_feel", "value": FEEL_LABEL[m.soilFeel], "source": "farmer_observation",
+                    "method": "moistened soil rubbed between the fingers", "usedInCalculation": False,
+                    "note": "Shown next to the regional estimate; hydraulic values stay tied to the active soil source"})
+    if m.waterlogging is not None:
+        out.append({"type": "waterlogging", "value": m.waterlogging, "source": "farmer_observation",
+                    "triggersWarning": WET_WARNING if m.waterlogging else None})
+    if m.runoff is not None:
+        out.append({"type": "runoff", "value": m.runoff, "source": "farmer_observation",
+                    "triggersWarning": WET_WARNING if m.runoff else None})
+    return out
 
 
 def _soil_sources(req: CompareReq, soil_profile: Optional[dict]):
@@ -227,8 +270,8 @@ def build_run(req: CompareReq, series: dict, manifests: list, effective_elevatio
     if not history:
         raise ValueError("history_required")
     n = min(len(history), 3)
-    hist = history[-n:]
-    intercrop = any(len(h.crops) > 1 for h in hist)
+    hist = [HistoryEntry(crops=list(dict.fromkeys(h.crops)), year=h.year, approxDate=h.approxDate) for h in history[-n:]]
+    intercrop = any(len(h.crops) > 1 for h in hist)  # two DIFFERENT crops sown together
     unknown = sorted({c for h in hist for c in h.crops if c not in cat})
     current_seq = None if (intercrop or unknown) else [h.crops[0] for h in hist]
 
@@ -264,7 +307,7 @@ def build_run(req: CompareReq, series: dict, manifests: list, effective_elevatio
     elev = req.location.elevation if req.location.elevation is not None else (effective_elevation or 0.0)
     eto = simulate.eto_series(series, req.location.lat, elev) if soil else None
     if req.management.runoff or req.management.waterlogging:
-        warnings.append("You observe runoff/waterlogging: the model assumes RO=0 and CR=0, so water results may be optimistic.")
+        warnings.append(WET_WARNING)
 
     soil_conditions = {"demo": ["Soil values are illustrative demo assumptions"],
                        "regional": ["Soil water parameters estimated from SoilGrids with a pedotransfer function (regional estimate, not a measurement)"],
@@ -278,6 +321,7 @@ def build_run(req: CompareReq, series: dict, manifests: list, effective_elevatio
         else:
             structure = "monoculture" if len(set(seq)) == 1 else "rotation"
         item = {"id": rid, "sequence": seq, "structure": structure,
+                "timeline": _timeline(seq, scen_md, bool(window), req.plantShiftDays),  # follows the scenario planting date
                 "history": [h.model_dump() for h in hist] if rid == "current" else None,
                 "indicators": {k: {"status": "pending", "score": None, "missing": v,
                                    "reason": "; ".join(m["item"] for m in v)} for k, v in PENDING.items()}}
@@ -326,7 +370,7 @@ def build_run(req: CompareReq, series: dict, manifests: list, effective_elevatio
             "Ks from the depletion at the end of the previous day (previous_day) or after same-day wetting (after_wetting)",
             "inflow Q = P - RO + I + CR enters the store; drainage DP = excess over TAW",
             "ETa = min(available water, Ks x ETm); depletion updated"]},
-        "soil": soil_report,
+        "soil": soil_report, "observations": _observations(req.management),
         "screening": screen,
         "viableCrops": {"allowed": allowed, "blocked": screen["blockedCrops"], "notes": screen["notes"]},
         "explanationOrder": order, "warnings": warnings,

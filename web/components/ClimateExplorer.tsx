@@ -101,7 +101,7 @@ export default function ClimateExplorer({ lang, t, months, period, profile, stat
   return (
     <div>
       <p className="eyebrow">{t.stepNo.replace("{n}", "02")} · {t.stepClimate}</p>
-      <h2 id="kn" tabIndex={-1} className="text-3xl font-semibold outline-offset-4">{t.known}</h2>
+      <h2 id="kn" tabIndex={-1} className="t-section outline-offset-4">{t.known}</h2>
       <p className="num tag mt-1">{coords}</p>
 
       {state === "loading" && !have && <p className="mt-4" role="status">{t.loading}</p>}
@@ -110,7 +110,7 @@ export default function ClimateExplorer({ lang, t, months, period, profile, stat
 
       {have && (
         <>
-          <p className="mt-4 max-w-3xl text-lg" aria-live="polite">{cap(observation)}</p>
+          <p className="t-body mt-4 max-w-3xl" aria-live="polite">{cap(observation)}</p>
           <p className="tag mt-1"><strong>{t.histBadge.replace("{a}", String(period[0])).replace("{b}", String(period[1]))}</strong> {t.histNote}</p>
 
           <div className="mt-5 max-w-4xl" ref={wrap}>
@@ -123,9 +123,9 @@ export default function ClimateExplorer({ lang, t, months, period, profile, stat
               {/* rain: horizontal grid + axis */}
               {[0, topR / 2, topR].map((v) => (
                 <g key={`r${v}`}><line x1={ML} x2={w - MR} y1={yR(v)} y2={yR(v)} stroke={INK} strokeOpacity={0.12} />
-                  <text x={ML - 6} y={yR(v) + 4} textAnchor="end" fontSize={11} fill={MUTED} className="num">{fmtMm(v)}</text></g>
+                  <text x={ML - 6} y={yR(v) + 4} textAnchor="end" fontSize={14} fill={MUTED} className="num">{fmtMm(v)}</text></g>
               ))}
-              <text x={ML - 6} y={top1 - 12} textAnchor="end" fontSize={11} fill={BLUE_DARK} fontWeight={600}>mm</text>
+              <text x={ML - 6} y={top1 - 12} textAnchor="end" fontSize={14} fill={BLUE_DARK} fontWeight={500}>mm</text>
               {rain.map((v, i) => {
                 const h = v == null ? 0 : (v / topR) * ph1, bw = colW * 0.58;
                 return (
@@ -133,7 +133,7 @@ export default function ClimateExplorer({ lang, t, months, period, profile, stat
                     <rect x={cx(i) - bw / 2} y={top1 + ph1 - h} width={bw} height={h} fill={i === sel ? BLUE_DARK : BLUE} opacity={i === sel ? 1 : 0.62}
                       style={{ transformBox: "fill-box", transformOrigin: "bottom", transform: played ? "scaleY(1)" : "scaleY(0)", transition: `transform .8s cubic-bezier(.2,.7,.2,1) ${i * 45}ms` }} />
                     {v != null && (!compact || i === sel) && (
-                      <text x={cx(i)} y={top1 + ph1 - h - 5} textAnchor="middle" fontSize={compact ? 11 : 10.5} fill={INK} fontWeight={i === sel ? 700 : 400} className="num"
+                      <text x={cx(i)} y={top1 + ph1 - h - 5} textAnchor="middle" fontSize={14} fill={INK} fontWeight={i === sel ? 500 : 400} className="num"
                         style={{ opacity: played ? 1 : 0, transition: "opacity .4s ease .9s" }}>{fmtMm(v)}</text>
                     )}
                   </g>
@@ -142,16 +142,16 @@ export default function ClimateExplorer({ lang, t, months, period, profile, stat
               {/* temperature: line drawn once */}
               {[tLo, (tLo + tHi) / 2, tHi].map((v) => (
                 <g key={`t${v}`}><line x1={ML} x2={w - MR} y1={yT(v)} y2={yT(v)} stroke={INK} strokeOpacity={0.12} />
-                  <text x={ML - 6} y={yT(v) + 4} textAnchor="end" fontSize={11} fill={MUTED} className="num">{fmtC(v).replace(/[.,]0$/, "")}</text></g>
+                  <text x={ML - 6} y={yT(v) + 4} textAnchor="end" fontSize={14} fill={MUTED} className="num">{fmtC(v).replace(/[.,]0$/, "")}</text></g>
               ))}
-              <text x={ML - 6} y={top2 - 12} textAnchor="end" fontSize={11} fill={TERRA} fontWeight={600}>°C</text>
+              <text x={ML - 6} y={top2 - 12} textAnchor="end" fontSize={14} fill={TERRA} fontWeight={500}>°C</text>
               <path d={lineD} fill="none" stroke={TERRA} strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" pathLength={1}
                 strokeDasharray={1} strokeDashoffset={played ? 0 : 1} style={{ transition: "stroke-dashoffset 1.5s ease .2s" }} />
               {linePts.map((p, i) => p && (
                 <g key={`d${i}`} style={{ opacity: played ? 1 : 0, transition: `opacity .4s ease ${0.5 + i * 0.09}s` }}>
                   <circle cx={p[0]} cy={p[1]} r={i === sel ? 6 : 3.4} fill={i === sel ? TERRA : HOLE} stroke={TERRA} strokeWidth={2} />
                   {(!compact || i === sel) && temp[i] != null && (
-                    <text x={p[0]} y={p[1] - 10} textAnchor="middle" fontSize={compact ? 11 : 10.5} fill={INK} fontWeight={i === sel ? 700 : 400} className="num">{fmtC(temp[i] as number)}</text>
+                    <text x={p[0]} y={p[1] - 10} textAnchor="middle" fontSize={14} fill={INK} fontWeight={i === sel ? 500 : 400} className="num">{fmtC(temp[i] as number)}</text>
                   )}
                 </g>
               ))}

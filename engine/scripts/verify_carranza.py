@@ -1,7 +1,8 @@
 """Reproduce the Jesus Carranza verification with REAL NASA POWER data.
 
 Run from engine/:  .venv/Scripts/python scripts/verify_carranza.py
-Writes data/verification/carranza_base.json and carranza_rain80.json.
+Writes data/verification/carranza_base.json and carranza_rain80.json (regional SoilGrids soil, the verified case)
+and carranza_demo_soil_*.json (illustrative 0.30/0.15 soil).
 Soil 0.30/0.15 are ILLUSTRATIVE DEMO ASSUMPTIONS, not measurements.
 """
 import json
@@ -34,8 +35,8 @@ def stats(run, i=0):
 
 
 base, rain80 = go(precipScale=1.0), go(precipScale=0.8)
-(OUT / "carranza_base.json").write_text(json.dumps(base, indent=2), encoding="utf-8")
-(OUT / "carranza_rain80.json").write_text(json.dumps(rain80, indent=2), encoding="utf-8")
+(OUT / "carranza_demo_soil_base.json").write_text(json.dumps(base, indent=2), encoding="utf-8")
+(OUT / "carranza_demo_soil_rain80.json").write_text(json.dumps(rain80, indent=2), encoding="utf-8")
 
 print("NASA cell:", eff, "| elevation used:", base["elevationUsedM"], "m")
 c0 = base["rotations"][0]["indicators"]["A"]["blocks"][0]["cycles"][0]
@@ -138,8 +139,13 @@ if prof["status"] == "ok":
               f" | maize AWC={c[0]['awcMmPerM']:.1f} mm/m TAW={c[0]['tawMm']:.1f} mm; bean AWC={c[1]['awcMmPerM']:.1f} mm/m TAW={c[1]['tawMm']:.1f} mm")
     (OUT / "carranza_regional_soil_base.json").write_text(json.dumps(reg["100%"], indent=2), encoding="utf-8")
     (OUT / "carranza_regional_soil_rain80.json").write_text(json.dumps(reg["80%"], indent=2), encoding="utf-8")
-(OUT / "carranza_base.json").write_text(json.dumps(base, indent=2), encoding="utf-8")
-(OUT / "carranza_rain80.json").write_text(json.dumps(rain80, indent=2), encoding="utf-8")
+# The verified Carranza case = regional SoilGrids soil: these two files are the reference exports.
+(OUT / "carranza_base.json").write_text(json.dumps(reg["100%"], indent=2), encoding="utf-8")
+(OUT / "carranza_rain80.json").write_text(json.dumps(reg["80%"], indent=2), encoding="utf-8")
+sb, sr = reg["100%"]["rotations"][0]["indicators"]["A"]["summary"], reg["80%"]["rotations"][0]["indicators"]["A"]["summary"]
+# 96.26 in the earlier report is a double rounding (96.2546 -> 96.255 -> 96.26); the exact value rounds to 96.25, so tolerance is 0.01
+ok = (abs(sb["medianA"] - 99.88) < 0.01 and abs(sr["medianA"] - 99.64) < 0.01 and abs(sb["p10"] - 96.99) < 0.01 and abs(sr["p10"] - 96.26) < 0.01)
+print(f"[REFERENCE] median {sb['medianA']:.4f} -> {sr['medianA']:.4f} | P10 {sb['p10']:.4f} -> {sr['p10']:.4f} | matches 99.88 -> 99.64 and 96.99 -> 96.26: {ok}")
 
 print("\n[SCREENING] current practice maize->bean->maize, all crops allowed")
 for c in base["screening"]["candidates"]:

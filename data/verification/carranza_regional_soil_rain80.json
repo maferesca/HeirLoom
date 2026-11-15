@@ -1,7 +1,7 @@
 {
-  "runId": "0cf82a77-5a67-4ba0-8ea2-f140d3695065",
-  "createdUtc": "2026-11-15T00:53:10.631210+00:00",
-  "engineVersion": "0.4.0",
+  "runId": "5d4023ac-343d-4495-acf6-72a6f4d47d0c",
+  "createdUtc": "2026-11-15T04:39:54.104718+00:00",
+  "engineVersion": "0.5.0",
   "catalogVersion": "0.2.0-pilot",
   "mode": "real",
   "request": {
@@ -70,8 +70,8 @@
   "sources": [
     {
       "url": "https://power.larc.nasa.gov/api/temporal/daily/point?latitude=17.432993&longitude=-95.02336&start=20050101&end=20091231&community=AG&parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CT2MDEW%2CRH2M%2CWS2M%2CPS%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&format=JSON&time-standard=UTC",
-      "retrievedAt": "2026-11-15T00:53:03.747141+00:00",
-      "sha256": "868e725c45c5b8a7dae4b5455bf6059e6d838ea6bb3c55aa93f93ce79c63f012",
+      "retrievedAt": "2026-11-15T04:39:47.675212+00:00",
+      "sha256": "69e16b982154fd0c0ba9dea3a0ebc3b132929b5f3d8ee0299f0f7a51f2b88520",
       "apiVersion": "v2.10.3",
       "fillValue": -999.0,
       "units": {
@@ -95,8 +95,8 @@
     },
     {
       "url": "https://power.larc.nasa.gov/api/temporal/daily/point?latitude=17.432993&longitude=-95.02336&start=20100101&end=20141231&community=AG&parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CT2MDEW%2CRH2M%2CWS2M%2CPS%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&format=JSON&time-standard=UTC",
-      "retrievedAt": "2026-11-15T00:53:05.217257+00:00",
-      "sha256": "d19ca5cdbd780e82ee80ff06969f48f17640188c812472a91c8b6a85fe3dd77f",
+      "retrievedAt": "2026-11-15T04:39:48.479930+00:00",
+      "sha256": "cc17b4b190a6c43e8db31b0d9e62a56103568fe24961e4355b8dd3ba4361d14f",
       "apiVersion": "v2.10.3",
       "fillValue": -999.0,
       "units": {
@@ -120,8 +120,8 @@
     },
     {
       "url": "https://power.larc.nasa.gov/api/temporal/daily/point?latitude=17.432993&longitude=-95.02336&start=20150101&end=20191231&community=AG&parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CT2MDEW%2CRH2M%2CWS2M%2CPS%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&format=JSON&time-standard=UTC",
-      "retrievedAt": "2026-11-15T00:53:06.213955+00:00",
-      "sha256": "03394de4026f1afdcc1e1c0da1a219227a1f0647cf0d7527bdb31a642c5049ad",
+      "retrievedAt": "2026-11-15T04:39:49.449087+00:00",
+      "sha256": "f01740bf65cd1b9fa9d79ac886c8dcffbe80cf2d5733bbad7c06f37626f330fe",
       "apiVersion": "v2.10.3",
       "fillValue": -999.0,
       "units": {
@@ -145,8 +145,8 @@
     },
     {
       "url": "https://power.larc.nasa.gov/api/temporal/daily/point?latitude=17.432993&longitude=-95.02336&start=20200101&end=20241231&community=AG&parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CT2MDEW%2CRH2M%2CWS2M%2CPS%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&format=JSON&time-standard=UTC",
-      "retrievedAt": "2026-11-15T00:53:08.223390+00:00",
-      "sha256": "eb8bafe1aceda360d6a7ad16f7fc5c99423c517793e404e6b6fc9fc32c314eef",
+      "retrievedAt": "2026-11-15T04:39:50.538684+00:00",
+      "sha256": "ddc5327392c0a8f8d1e8fe94a83961f9cfa6e166086ef28bb071decfa89a23ca",
       "apiVersion": "v2.10.3",
       "fillValue": -999.0,
       "units": {
@@ -1014,6 +1014,66 @@
         "maize"
       ],
       "structure": "rotation",
+      "timeline": {
+        "status": "ok",
+        "basis": "simulation_date",
+        "cycles": [
+          {
+            "crop": "maize",
+            "plant": [
+              6,
+              15
+            ],
+            "harvest": [
+              10,
+              18
+            ],
+            "cycleDays": 125,
+            "gapDays": 240,
+            "gapFrom": [
+              10,
+              18
+            ],
+            "gapTo": [
+              6,
+              15
+            ]
+          },
+          {
+            "crop": "bean",
+            "plant": [
+              6,
+              15
+            ],
+            "harvest": [
+              10,
+              3
+            ],
+            "cycleDays": 110,
+            "gapDays": 255,
+            "gapFrom": [
+              10,
+              3
+            ],
+            "gapTo": [
+              6,
+              15
+            ]
+          },
+          {
+            "crop": "maize",
+            "plant": [
+              6,
+              15
+            ],
+            "harvest": [
+              10,
+              18
+            ],
+            "cycleDays": 125
+          }
+        ]
+      },
       "history": [
         {
           "crops": [
@@ -4468,6 +4528,66 @@
         "bean"
       ],
       "structure": "rotation",
+      "timeline": {
+        "status": "ok",
+        "basis": "simulation_date",
+        "cycles": [
+          {
+            "crop": "bean",
+            "plant": [
+              6,
+              15
+            ],
+            "harvest": [
+              10,
+              3
+            ],
+            "cycleDays": 110,
+            "gapDays": 255,
+            "gapFrom": [
+              10,
+              3
+            ],
+            "gapTo": [
+              6,
+              15
+            ]
+          },
+          {
+            "crop": "maize",
+            "plant": [
+              6,
+              15
+            ],
+            "harvest": [
+              10,
+              18
+            ],
+            "cycleDays": 125,
+            "gapDays": 240,
+            "gapFrom": [
+              10,
+              18
+            ],
+            "gapTo": [
+              6,
+              15
+            ]
+          },
+          {
+            "crop": "bean",
+            "plant": [
+              6,
+              15
+            ],
+            "harvest": [
+              10,
+              3
+            ],
+            "cycleDays": 110
+          }
+        ]
+      },
       "history": null,
       "indicators": {
         "H": {
@@ -6148,6 +6268,66 @@
         "maize"
       ],
       "structure": "rotation",
+      "timeline": {
+        "status": "ok",
+        "basis": "simulation_date",
+        "cycles": [
+          {
+            "crop": "bean",
+            "plant": [
+              6,
+              15
+            ],
+            "harvest": [
+              10,
+              3
+            ],
+            "cycleDays": 110,
+            "gapDays": 255,
+            "gapFrom": [
+              10,
+              3
+            ],
+            "gapTo": [
+              6,
+              15
+            ]
+          },
+          {
+            "crop": "maize",
+            "plant": [
+              6,
+              15
+            ],
+            "harvest": [
+              10,
+              18
+            ],
+            "cycleDays": 125,
+            "gapDays": 240,
+            "gapFrom": [
+              10,
+              18
+            ],
+            "gapTo": [
+              6,
+              15
+            ]
+          },
+          {
+            "crop": "maize",
+            "plant": [
+              6,
+              15
+            ],
+            "harvest": [
+              10,
+              18
+            ],
+            "cycleDays": 125
+          }
+        ]
+      },
       "history": null,
       "indicators": {
         "H": {

@@ -209,3 +209,63 @@ def test_blocked_monoculture_is_not_called_the_only_option():
     assert c["decision"] == "discarded"
     assert next(x for x in c["checks"] if x["check"] == "structure")["code"] == "monoculture_label"
     assert next(x for x in by_seq(r, ["maize", "maize", "maize"])["checks"] if x["check"] == "structure")["code"] == "monoculture_only_option"
+
+
+# ---------------------------------------------------------------- calendar timeline and duplicate crops
+def test_timeline_gap_days_from_cycle_length():
+    r = run()
+    tl = r["rotations"][0]["timeline"]
+    assert tl["status"] == "ok" and tl["basis"] == "simulation_date"
+    maize, bean, last = tl["cycles"]
+    assert maize["plant"] == [6, 15] and maize["harvest"] == [10, 18] and maize["cycleDays"] == 125
+    assert maize["gapDays"] == 240 and maize["gapFrom"] == [10, 18] and maize["gapTo"] == [6, 15]
+    assert bean["cycleDays"] == 110 and bean["harvest"] == [10, 3] and bean["gapDays"] == 255
+    assert "gapDays" not in last  # no next planting inside the horizon
+
+
+def test_timeline_unavailable_for_intercrop_and_basis_with_window():
+    r = run(history=[{"crops": ["maize", "bean"]}, {"crops": ["maize"]}, {"crops": ["maize"]}])
+    tl = r["rotations"][0]["timeline"]
+    assert tl["status"] == "unavailable" and tl["missing"]
+    w = run(window={"startMonth": 5, "startDay": 1, "endMonth": 7, "endDay": 31})
+    assert w["rotations"][0]["timeline"]["basis"] == "usual_date_with_window"
+
+
+def test_same_crop_listed_twice_is_not_an_intercrop():
+    r = run(history=[{"crops": ["maize", "maize"]}, {"crops": ["bean", "bean"]}, {"crops": ["maize"]}])
+    cur = r["rotations"][0]
+    assert cur["sequence"] == ["maize", "bean", "maize"] and cur["structure"] == "rotation"
+    assert cur["history"][0]["crops"] == ["maize"]
+    assert not any(n["code"] == "intercrop_current" for n in r["screening"]["notes"])
+
+
+# ---------------------------------------------------------------- farmer observations
+def test_observations_are_recorded_apart_from_soil_values():
+    r = run(management={"soilFeel": "sticky", "waterlogging": True, "runoff": False})
+    obs = {o["type"]: o for o in r["observations"]}
+    assert obs["soil_texture_feel"]["value"] == "sticky" and obs["soil_texture_feel"]["usedInCalculation"] is False
+    assert obs["waterlogging"]["triggersWarning"] and obs["runoff"]["triggersWarning"] is None
+    assert any("runoff/waterlogging" in w for w in r["warnings"])
+    # hydraulic values come only from the active source (demo here), never from the observation
+    assert r["soil"]["active"] == "demo" and r["soil"]["sources"]["demo"]["thetaFC"] == 0.30
+
+
+def test_unknown_answers_record_nothing_and_do_not_block_the_comparison():
+    r = run(management={"soilFeel": "unknown"})
+    assert r["observations"] == [] and r["warnings"] == []
+    assert r["rotations"][0]["indicators"]["A"]["status"] == "provisional" or r["rotations"][0]["indicators"]["A"]["status"] == "conditional"
+    assert r["rotations"][0]["indicators"]["A"]["summary"] is not None
+
+
+def test_runoff_alone_triggers_the_water_warning_and_no_answer_keeps_it_off():
+    assert run(management={"runoff": True})["warnings"]
+    assert run(management={"runoff": False, "waterlogging": False})["warnings"] == []
+
+
+def test_timeline_follows_the_scenario_planting_date():
+    base = run()["rotations"][0]["timeline"]
+    moved = run(plantShiftDays=4)["rotations"][0]["timeline"]
+    assert base["shiftDays"] == 0 and moved["shiftDays"] == 4
+    assert base["cycles"][0]["plant"] == [6, 15] and moved["cycles"][0]["plant"] == [6, 19]
+    assert moved["cycles"][0]["harvest"] == [10, 22] and moved["cycles"][0]["gapFrom"] == [10, 22]
+    assert moved["cycles"][0]["gapDays"] == base["cycles"][0]["gapDays"] == 240  # days between cycles do not change

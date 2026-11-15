@@ -15,6 +15,7 @@ const ES: Record<string, string> = {
   "Same; SoilGrids alone does not provide it": "Igual; SoilGrids por sí solo no lo da",
   "No valid historical block (missing critical days)": "Ningún bloque histórico válido (faltan días críticos)",
   "Crops sown together cannot be represented: the engine simulates one crop per cycle. Not converted into a sequential rotation.": "Los cultivos sembrados juntos no se pueden representar: el motor simula un cultivo por ciclo. No se convirtió en una rotación secuencial.",
+  "One crop per cycle (crops sown together cannot be placed on a timeline)": "Un solo cultivo por ciclo (los cultivos sembrados juntos no se pueden ubicar en la línea del tiempo)",
   "Intercrop (association) water model": "Modelo de agua para cultivos asociados",
   "You observe runoff/waterlogging: the model assumes RO=0 and CR=0, so water results may be optimistic.": "Observas escurrimiento o encharcamiento: el modelo supone escurrimiento 0 y ascenso capilar 0, así que el resultado de agua puede ser optimista.",
   "The simulated planting date is outside your stated planting window.": "La fecha de siembra simulada queda fuera de tu ventana de siembra.",

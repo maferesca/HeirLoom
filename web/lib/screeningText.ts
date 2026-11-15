@@ -50,3 +50,31 @@ export function reasonText(lang: string, code: string, params: P = {}): string {
   const f = (lang === "es" ? ES : EN)[code];
   return f ? f(params, lang) : code;
 }
+
+
+// ---- Plain-language sentences generated from the engine's screening checks ----
+const cropName = (lang: string, c: string) => (c === "maize" ? (lang === "es" ? "maíz" : "maize") : c === "bean" ? (lang === "es" ? "frijol" : "dry bean") : c);
+
+/** Why an option was DISCARDED, from its failed check. */
+export function discardSentence(lang: string, code: string, params: Record<string, unknown> = {}): string {
+  const c = cropName(lang, String(params.crop ?? ""));
+  const es: Record<string, string> = {
+    not_allowed: `Esta opción incluye ${c} y no lo marcaste entre lo que puedes o quieres sembrar.`,
+    seed_unavailable: `Esta opción incluye ${c} y nos dijiste que no consigues semilla de ese cultivo.`,
+    equipment_unsupported: `Esta opción incluye ${c} y nos dijiste que tu equipo no sirve para ese cultivo.`,
+    no_buyer: `Esta opción incluye ${c} y nos dijiste que no tienes comprador para ese cultivo.`,
+    date_outside_window: "Tu fecha habitual de siembra queda fuera de la ventana que indicaste.",
+    cycles_overlap: `La cosecha del ciclo ${params.cycle} (${c}) termina ${params.overlapDays} días después de que abre la siguiente siembra.`,
+    monoculture_when_rotation_possible: "Repite un solo cultivo y con los cultivos que puedes sembrar es posible hacer una rotación.",
+  };
+  const en: Record<string, string> = {
+    not_allowed: `This option includes ${c} and you did not mark it among what you can or want to plant.`,
+    seed_unavailable: `This option includes ${c} and you told us you cannot get seed for it.`,
+    equipment_unsupported: `This option includes ${c} and you told us your equipment cannot handle it.`,
+    no_buyer: `This option includes ${c} and you told us you have no buyer for it.`,
+    date_outside_window: "Your usual planting date falls outside the window you gave.",
+    cycles_overlap: `The harvest of cycle ${params.cycle} (${c}) ends ${params.overlapDays} days after the next planting opens.`,
+    monoculture_when_rotation_possible: "It repeats a single crop and a rotation is possible with the crops you can plant.",
+  };
+  return (lang === "es" ? es : en)[code] ?? code;
+}
