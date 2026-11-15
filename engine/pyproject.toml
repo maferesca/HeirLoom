@@ -1,0 +1,12 @@
+[project]
+name = "heirloom-engine"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["fastapi==0.115.6", "uvicorn==0.34.0", "pydantic==2.10.4", "httpx==0.28.1", "numpy>=2.1"]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.4"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

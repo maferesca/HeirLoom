@@ -1,0 +1,67 @@
+{
+  "version": "0.2.0-pilot",
+  "verifiedOn": "2026-11-14",
+  "verification": "Values re-read on 2026-11-14 from the FAO-56 web edition: Table 11 and 12 at https://www.fao.org/4/x0490e/x0490e0b.htm, Tables 22 and 24 at https://www.fao.org/4/x0490e/x0490e0e.htm. Each parameter below is tagged 'bibliographic' (value read from the table) or 'pilot_assumption' (a choice Heirloom made inside or outside the published range). Fields without a source stay 'pending'.",
+  "crops": {
+    "maize": {
+      "name": {"es": "Maíz (grano)", "en": "Maize (grain)"},
+      "family": "Poaceae",
+      "cycleDays": {"ini": 20, "dev": 35, "mid": 40, "late": 30},
+      "kc": {"ini": 0.30, "mid": 1.20, "end": 0.60},
+      "ky": 1.25, "depletionFraction": 0.55, "rootDepthM": 1.0,
+      "floweringStartDay": "pending", "heatThresholdC": "pending",
+      "parameters": [
+        {"name": "kc_ini", "value": 0.30, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 12, Cereals group value 0.3 (the per-row cell is an image on the web page and could not be read as text)",
+         "note": "Assumes infrequent wetting; FAO says Kc ini rises with frequent wetting (Figs. 29-30). Not refined here: project assumption."},
+        {"name": "kc_mid", "value": 1.20, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 12, 'Maize, Field (grain)'",
+         "note": "Standard climate RHmin~45%, u2~2 m/s. The eq. 62 climate adjustment is NOT applied: project assumption."},
+        {"name": "kc_end", "value": 0.60, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 12, 'Maize, Field (grain)', Kc end 0.60-0.35 footnote 11",
+         "note": "0.60 = harvest at high grain moisture; 0.35 = grain dried in field. Choice of 0.60 is a pilot assumption inside the published pair."},
+        {"name": "stage_lengths", "value": {"ini": 20, "dev": 35, "mid": 40, "late": 30, "total": 125}, "unit": "days", "type": "bibliographic",
+         "reference": "FAO-56 Table 11, 'Maize (grain)' row June, Nigeria (humid)",
+         "note": "FAO calls these 'indicative of general conditions'. Applying a Nigerian humid row to Veracruz/Oaxaca is a pilot assumption; stages should come from local phenology."},
+        {"name": "root_depth", "value": 1.0, "unit": "m", "type": "pilot_assumption",
+         "reference": "FAO-56 Table 22, 'Maize, Field (grain)': range 1.0-1.7 m (footnote 1: larger values for modeling water stress or rainfed conditions)",
+         "note": "1.0 m is the lower bound of the range. Held constant from planting (no root growth model). Sensitivity with 1.7 m is run in the verification script."},
+        {"name": "depletion_fraction_p", "value": 0.55, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 22, 'Maize, Field (grain)', valid for ETc ~5 mm/day",
+         "note": "Adjusted each day as p + 0.04 (5 - ETc), limited to 0.1-0.8 (Table 22 footnote 2), applied from engine 0.3.0."},
+        {"name": "ky", "value": 1.25, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 24 (from FAO-33), 'Maize'",
+         "note": "Whole-season Ky; used only with seasonal sums of ETa and ETm."}
+      ]
+    },
+    "bean": {
+      "name": {"es": "Frijol (seco)", "en": "Dry bean"},
+      "family": "Fabaceae",
+      "cycleDays": {"ini": 20, "dev": 30, "mid": 40, "late": 20},
+      "kc": {"ini": 0.40, "mid": 1.15, "end": 0.35},
+      "ky": 1.15, "depletionFraction": 0.45, "rootDepthM": 0.6,
+      "floweringStartDay": "pending", "heatThresholdC": "pending",
+      "parameters": [
+        {"name": "kc_ini", "value": 0.40, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 12, 'Beans, dry and Pulses'",
+         "note": "Infrequent-wetting value; not refined for frequent rain: project assumption."},
+        {"name": "kc_mid", "value": 1.15, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 12, 'Beans, dry and Pulses', footnote 2",
+         "note": "Footnote 2: 1.20 if grown on stalks 1.5-2 m tall; bush type assumed (pilot assumption). Eq. 62 not applied."},
+        {"name": "kc_end", "value": 0.35, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 12, 'Beans, dry and Pulses'", "note": ""},
+        {"name": "stage_lengths", "value": {"ini": 20, "dev": 30, "mid": 40, "late": 20, "total": 110}, "unit": "days", "type": "bibliographic",
+         "reference": "FAO-56 Table 11, 'Beans (dry)' row May/June, Continental Climates",
+         "note": "Indicative; transfer to the pilot region is a pilot assumption."},
+        {"name": "root_depth", "value": 0.6, "unit": "m", "type": "pilot_assumption",
+         "reference": "FAO-56 Table 22, 'Beans, dry and Pulses': range 0.6-0.9 m",
+         "note": "Lower bound of the range, constant from planting. Sensitivity with 0.9 m is run in the verification script."},
+        {"name": "depletion_fraction_p", "value": 0.45, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 22, 'Beans, dry and Pulses', valid for ETc ~5 mm/day",
+         "note": "Adjusted daily with ETc as for maize."},
+        {"name": "ky", "value": 1.15, "unit": "dimensionless", "type": "bibliographic",
+         "reference": "FAO-56 Table 24 (from FAO-33), 'Beans'", "note": "Whole-season Ky."}
+      ]
+    }
+  }
+}
