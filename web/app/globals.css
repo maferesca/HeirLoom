@@ -73,7 +73,7 @@ a { text-underline-offset: 3px; }
 .search-pill input { background: transparent; border: 0; border-radius: 999px; padding: 0 16px; }
 .search-pill input:focus-visible { outline-offset: 0; }
 .btn.hero-search { min-width: 112px; }
-.hero-caption { position: absolute; z-index: 4; right: 16px; bottom: 12px; font-size: 14px; letter-spacing: .02em; opacity: .75; }
+.hero-caption { position: absolute; z-index: 4; right: 16px; bottom: 12px; font-size: 14px; font-weight: 600; letter-spacing: .02em; padding: 4px 10px; border-radius: 8px; border: 1px solid #E9B877; background: rgba(6,16,12,.8); color: #F1EDE2; }
 
 /* lens: a glass sphere straddling the panel edge that shows the fields seen from above; thin rings with dots orbit it */
 .hero-orbit { position: absolute; z-index: 2; top: 50%; left: calc(min(52%, 760px) + clamp(300px, 36vw, 560px) * 0.1); width: clamp(300px, 36vw, 560px); aspect-ratio: 1; margin-top: calc(clamp(300px, 36vw, 560px) / -2); margin-left: calc(clamp(300px, 36vw, 560px) / -2); pointer-events: none; will-change: transform; }

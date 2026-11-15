@@ -1,0 +1,6 @@
+node_modules
+out
+.venv-tts
+tts-models
+public/globe
+public/footage

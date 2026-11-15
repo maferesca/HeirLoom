@@ -1,0 +1,11 @@
+{
+  "before": [
+    "Your current practice | Rotation | Maize | Dry bean | Maize | planting Jun 15 | harvest Oct 18 | planting Jun 15",
+    "Alternative 1 | Rotation | Dry bean | Maize | Dry bean | planting Jun 15 | harvest Oct 3 | planting Jun 15",
+    "Alternative 2 | Rotation | Dry bean | Maize | Maize | planting Jun 15 | harvest Oct 3 | planting Jun 15"
+  ],
+  "after": [
+    "Your current practice | Rotation | Maize | Dry bean | Maize | planting Jun 15 | harvest Oct 18 | planting Jun 15",
+    "Alternative 1 | Monoculture | Maize | Maize | Maize | planting Jun 15 | harvest Oct 18 | planting Jun 15"
+  ]
+}

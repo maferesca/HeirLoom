@@ -1,0 +1,27 @@
+{
+  "name": "heirloom-demo-video",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "studio": "remotion studio",
+    "capture": "node scripts/capture.mjs",
+    "record": "node scripts/record.mjs",
+    "capture2": "node scripts/capture2.mjs",
+    "globe": "node scripts/globe.mjs",
+    "vo": ".venv-tts/Scripts/python scripts/make_vo_kokoro.py",
+    "music": "python scripts/make_music.py",
+    "render": "node scripts/render.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.543",
+    "@remotion/google-fonts": "^4.0.543",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.543"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "playwright": "^1.65.1",
+    "typescript": "^7.0.2"
+  }
+}
