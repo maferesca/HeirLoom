@@ -32,7 +32,7 @@ export default function MapPicker({ lat, lon, onChange, unavailableText, failedT
     const map = mapRef.current, mb = mbRef.current;
     if (!map || !mb) return;
     if (markerRef.current) { markerRef.current.setLngLat([lo, la]); return; }
-    const m = new mb.Marker({ draggable: true, color: "#A4523A" }).setLngLat([lo, la]).addTo(map);
+    const m = new mb.Marker({ draggable: true, color: "#C0603F" }).setLngLat([lo, la]).addTo(map);
     m.on("dragend", () => { const p = m.getLngLat(); cb.current(p.lat, p.lng); });
     markerRef.current = m;
   }

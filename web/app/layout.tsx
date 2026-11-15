@@ -3,7 +3,7 @@ import { Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const f = Instrument_Sans({ variable: "--font-instrument", subsets: ["latin"] });
+const f = Instrument_Sans({ variable: "--font-instrument", subsets: ["latin"], style: ["normal", "italic"] });
 
 export const metadata: Metadata = {
   title: "Heirloom",

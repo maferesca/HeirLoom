@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { T, type Lang } from "@/lib/i18n";
 import MapPicker from "./MapPicker";
+import ClimateExplorer from "./ClimateExplorer";
+import Reveal from "./Reveal";
+import { initScrollScene, refreshScene } from "@/lib/scrollScene";
 import { tr as trEng } from "@/lib/engineText";
 import { reasonText } from "@/lib/screeningText";
 
@@ -17,31 +20,6 @@ async function post(path: string, body: unknown, signal?: AbortSignal) {
   const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
   if (!r.ok) throw new Error(String(r.status));
   return r.json();
-}
-
-function Bars({ values, label, unit, fmt = 0 }: { values: (number | null)[]; label: string; unit: string; fmt?: number }) {
-  const max = Math.max(1, ...values.map((v) => v ?? 0));
-  const months = "JFMAMJJASOND";
-  return (
-    <figure className="m-0">
-      <figcaption className="tag mb-1">{label}</figcaption>
-      <svg viewBox="0 0 360 120" role="img" aria-label={label} className="w-full">
-        {values.map((v, i) => {
-          const h = v == null ? 0 : (Math.max(v, 0) / max) * 90;
-          return (
-            <g key={i}>
-              <rect x={i * 30 + 4} y={100 - h} width={22} height={h} fill="#3E5B4F" />
-              <text x={i * 30 + 15} y={114} fontSize="10" textAnchor="middle" fill="#3E5B4F">{months[i]}</text>
-              {v != null && <text x={i * 30 + 15} y={95 - h} fontSize="9" textAnchor="middle" className="num" fill="#172D27">{v.toFixed(fmt)}</text>}
-            </g>
-          );
-        })}
-      </svg>
-      <details className="tag"><summary>Tabla / Table ({unit})</summary>
-        <table className="num"><tbody>{values.map((v, i) => <tr key={i}><td>{i + 1}</td><td>{v == null ? "—" : v.toFixed(1)}</td></tr>)}</tbody></table>
-      </details>
-    </figure>
-  );
 }
 
 const num = (s: string) => (s.trim() === "" || !isFinite(Number(s)) ? undefined : Number(s));
@@ -99,11 +77,9 @@ export default function Journey({ lang }: { lang: Lang }) {
   const abort = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chosenRef = useRef<string | null>(null);
-  const knownRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState(-1);
   const [placeName, setPlaceName] = useState("");
   const [flyToken, setFlyToken] = useState(0);
-  const [knownSeen, setKnownSeen] = useState(false);
 
   const motionOff = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: motionOff() ? "auto" : "smooth", block: "start" });
@@ -152,6 +128,13 @@ export default function Journey({ lang }: { lang: Lang }) {
     confirmLocation(p.lat, p.lon, undefined, "map");
   }
 
+  function runCase() {
+    setCycles([{ crop: "maize", also: "", approx: "" }, { crop: "bean", also: "", approx: "" }, { crop: "maize", also: "", approx: "" }]); setUsual({ m: "6", d: "15" });
+    chosenRef.current = t.caseName; setQ(t.caseName); setPlaces(null); setSearchMsg("");
+    setCoords({ lat: "17.432993", lon: "-95.02336", elev: "" }); setPlaceName(t.caseName); setFlyToken((n) => n + 1);
+    confirmLocation(17.432993, -95.02336, undefined, "map");
+  }
+
   function invalidate() { setSoilProf(null); setSoilSource(""); setProfile(null); setRun(null); setSimRun(null); setSimOn(false); setShift(0); setRain(100); }
 
   function confirmLocation(lat: number, lon: number, elevation?: number, target: "map" | "known" = "known") {
@@ -175,17 +158,9 @@ export default function Journey({ lang }: { lang: Lang }) {
     setTimeout(() => document.getElementById("kn")?.focus({ preventScroll: true }), motionOff() ? 0 : 450);
   }
 
-  // The climate section fades/slides in the first time it reaches the viewport
-  useEffect(() => {
-    if (!confirmed || knownSeen) return;
-    const el = knownRef.current;
-    if (!el) return;
-    if (motionOff() || typeof IntersectionObserver === "undefined") { setKnownSeen(true); return; }
-    const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { setKnownSeen(true); io.disconnect(); } }, { threshold: 0.12 });
-    io.observe(el);
-    return () => io.disconnect();
-     
-  }, [confirmed, knownSeen]);
+  // scroll-linked decorative layers (static with reduced motion)
+  useEffect(() => initScrollScene(), []);
+  useEffect(() => { const id = setTimeout(refreshScene, 60); return () => clearTimeout(id); }, [confirmed, profile, run, soilProf, simOn]);
 
   async function loadSoil() {
     if (!confirmed) return;
@@ -256,6 +231,25 @@ export default function Journey({ lang }: { lang: Lang }) {
   const toggleCrop = (c: string) => setAllowed((a) => (a.includes(c) ? a.filter((x) => x !== c) : [...a, c]));
   const winBad = hasMD(winFrom) !== hasMD(winTo);
 
+  const stepTitle = (n: string, k: string) => `${t.stepNo.replace("{n}", n)} · ${k}`;
+  const regimeLabel = { rainfed: t.rainfed, irrigated: t.irrigated, both: t.both, unknown: t.unknownOpt }[regime];
+  const soilChip = soilSource === "regional" ? t.srcRegional : soilSource === "farmer" ? t.srcFarmer : soilSource === "demo" ? t.srcDemo : t.unknown;
+  const seqText = cycles.map((c) => [c.crop, c.also].filter(Boolean).map(cropLabel).join(" + ")).join(" → ");
+  const chips = [
+    { id: "step-1", label: t.chipHistory, value: seqText },
+    { id: "step-2", label: t.chipDate, value: `${usual.d}/${usual.m}${hasMD(winFrom) && hasMD(winTo) ? ` (${winFrom.d}/${winFrom.m}–${winTo.d}/${winTo.m})` : ""}` },
+    { id: "step-2", label: t.chipWater, value: regimeLabel },
+    { id: "step-3", label: t.chipCrops, value: allowed.map(cropLabel).join(", ") || "—" },
+    { id: "step-4", label: t.chipSoil, value: soilChip },
+  ];
+  const editStep = (id: string) => {
+    scrollToId(id);
+    setTimeout(() => (document.getElementById(id)?.querySelector("input,select,button") as HTMLElement | null)?.focus({ preventScroll: true }), motionOff() ? 0 : 500);
+  };
+  const StepHead = ({ n, title }: { n: number; title: string }) => (
+    <><div className="step-no" aria-hidden>{n}</div><h3 className="self-center text-xl font-semibold">{title}</h3></>
+  );
+
   return (
     <main>
       <header className="absolute z-10 flex w-full items-center justify-between px-6 py-4 text-sm text-cream">
@@ -263,14 +257,31 @@ export default function Journey({ lang }: { lang: Lang }) {
         <Link href={`/${other}`} className="underline" hrefLang={other}>{other.toUpperCase()}</Link>
       </header>
 
-      <section className="hero flex items-end px-6 pb-12 pt-24 md:px-[8vw] md:pb-16">
-        <div className="w-full max-w-[1280px]">
-         <div className="hero-copy max-w-[640px]">
-          <h1>{t.heroTitle}</h1>
-          <p className="mt-4 max-w-xl text-lg">{t.heroSub}</p>
-          <form role="search" className="relative mt-7 max-w-xl text-ink" onSubmit={onSearchSubmit}>
-            <label htmlFor="q" className="mb-1 block text-sm text-cream">{t.search}</label>
-            <div className="flex gap-2">
+      <section className="hero" data-scene>
+        <div className="hero-art" data-parallax="0.18" aria-hidden />
+
+        {/* a glass lens onto the fields seen from above, with thin orbit rings and dots (decorative) */}
+        <div className="hero-orbit" data-parallax="-0.06" aria-hidden>
+          <svg className="hero-rings" viewBox="0 0 200 200" fill="none">
+            <g className="ring-a">
+              <circle cx="100" cy="100" r="96" stroke="#E9B877" strokeOpacity=".5" strokeWidth=".5" />
+              <circle cx="100" cy="4" r="1.7" fill="#F6D9A3" /><circle cx="183" cy="148" r="1.7" fill="#F6D9A3" /><circle cx="22" cy="146" r="1.7" fill="#F6D9A3" />
+            </g>
+            <g className="ring-b">
+              <circle cx="100" cy="100" r="74" stroke="#E9B877" strokeOpacity=".4" strokeWidth=".5" />
+              <circle cx="174" cy="100" r="1.5" fill="#E9B877" /><circle cx="48" cy="164" r="1.5" fill="#E9B877" />
+            </g>
+          </svg>
+          <div className="hero-lens" />
+        </div>
+
+        <div className="hero-panel">
+          <span className="hero-star" aria-hidden>✦</span>
+          <h1>{t.heroTitleA}<em>{t.heroTitleB}</em></h1>
+          <p className="hero-sub">{t.heroSub}</p>
+          <form role="search" className="relative mt-8 max-w-xl" onSubmit={onSearchSubmit}>
+            <label htmlFor="q" className="mb-2 block text-sm text-cream">{t.search}</label>
+            <div className="search-pill">
               <input id="q" ref={inputRef} className="min-w-0 flex-1" value={q} onChange={(e) => { chosenRef.current = null; setQ(e.target.value); }} autoComplete="off"
                 placeholder={t.searchEx} role="combobox" aria-expanded={!!places?.length} aria-controls="places" aria-autocomplete="list"
                 aria-activedescendant={active >= 0 ? `place-${active}` : undefined}
@@ -280,367 +291,432 @@ export default function Journey({ lang }: { lang: Lang }) {
                   else if (e.key === "ArrowUp") { e.preventDefault(); setActive((i) => (i <= 0 ? places.length - 1 : i - 1)); }
                   else if (e.key === "Escape") { setPlaces(null); setActive(-1); }
                 }} />
-              <button type="submit" className="btn accent hero-search">{t.searchBtn}</button>
+              <button type="submit" className="btn hero-search">{t.searchBtn}</button>
             </div>
-            <div aria-live="polite" className="mt-1 min-h-5 text-sm text-cream">{searchMsg}</div>
+            <div aria-live="polite" className="mt-2 min-h-5 text-sm text-cream">{searchMsg}</div>
             {places && places.length > 0 && (
               <ul id="places" role="listbox" className="panel absolute left-0 right-0 z-20 mt-1 max-h-64 list-none overflow-auto p-0 shadow-md">
                 {places.map((p, i) => (
-                  <li key={i} id={`place-${i}`} role="option" aria-selected={i === active} className="opt flex min-h-[44px] cursor-pointer items-center px-3"
+                  <li key={i} id={`place-${i}`} role="option" aria-selected={i === active} className="opt flex min-h-[44px] cursor-pointer items-center px-4"
                     onMouseEnter={() => setActive(i)} onClick={() => choose(p)}>{p.full || p.name}</li>
                 ))}
               </ul>
             )}
           </form>
-         </div>
+          <div className="mt-3"><button type="button" className="btn ghost" onClick={runCase}>{t.heroCase}</button></div>
         </div>
         <span className="hero-caption">{t.illusShort}</span>
       </section>
 
-      <div className="mx-auto max-w-[1280px] px-6 py-16 md:px-10">
-        <section id="map-section" aria-labelledby="loc" className="panel scroll-mt-4 p-6">
-          <h2 id="loc" className="text-2xl font-semibold">{t.placeMap}</h2>
-          {placeName && <p className="mt-1 font-semibold" aria-live="polite">{t.placeConfirmed}: {placeName}</p>}
-          <div className="mt-2"><MapPicker lat={isFinite(parseFloat(coords.lat)) ? parseFloat(coords.lat) : null} lon={isFinite(parseFloat(coords.lon)) ? parseFloat(coords.lon) : null}
-            onChange={(la, lo) => setCoords((c) => ({ ...c, lat: la.toFixed(5), lon: lo.toFixed(5) }))} unavailableText={t.mapUnavailable} failedText={t.mapFailed} flyToken={flyToken} /></div>
-          {confirmed && <p className="mt-3"><a href="#known" className="font-medium underline" onClick={goClimate}>{t.seeClimate} ↓</a></p>}
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {(["lat", "lon", "elev"] as const).map((k) => (
-              <label key={k} className="flex flex-col text-sm">{t[k]}
-                <input inputMode="decimal" value={coords[k]} onChange={(e) => setCoords({ ...coords, [k]: e.target.value })} />
-              </label>
-            ))}
+      <div className="flow">
+        {/* ---- 01 · Locate your land: the furrows of the cover come back as contour curves around the map ---- */}
+        <section id="map-section" aria-labelledby="loc" className="band scroll-mt-4" data-scene>
+          <div className="layer-host" aria-hidden>
+            <div className="layer layer-rings" data-parallax="0.12" data-fade data-opacity="0.6"><i /></div>
+            <div className="layer layer-rings hide-sm" data-parallax="-0.07" data-fade data-opacity="0.28" style={{ top: "38%" }}><i /></div>
           </div>
-          <p className="tag mt-2">{t.pointNote}</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button className="btn" onClick={() => confirmLocation(Number(coords.lat), Number(coords.lon), coords.elev ? Number(coords.elev) : undefined)}>{t.useLoc}</button>
-            <button className="btn ghost" onClick={() => { setCoords({ lat: "17.432993", lon: "-95.02336", elev: "" }); setCycles([{ crop: "maize", also: "", approx: "" }, { crop: "bean", also: "", approx: "" }, { crop: "maize", also: "", approx: "" }]); setUsual({ m: "6", d: "15" }); }}>{t.pilot}</button>
-          </div>
-          <p className="tag mt-1">{t.pilotNote}</p>
-        </section>
-
-        {confirmed && (
-          <section id="known" ref={knownRef} aria-labelledby="kn" className={`panel reveal mt-10 scroll-mt-4 p-6${knownSeen ? " in" : ""}`}>
-            <h2 id="kn" tabIndex={-1} className="text-2xl font-semibold outline-offset-4">{t.known}</h2>
-            <p className="num tag">{confirmed.lat.toFixed(4)}, {confirmed.lon.toFixed(4)}</p>
-            {!profile && <button className="btn mt-3" onClick={() => loadProfile()} disabled={profileState === "loading"}>{profileState === "loading" ? t.loading : t.seeData}</button>}
-            {profileState === "error" && <p role="alert" className="risk mt-2">{t.apiDown} <button className="underline" onClick={() => loadProfile()}>{t.retry}</button></p>}
-            {profile && (
-              <>
-                <p className="tag mt-2">{t.histNote} ({profile.period[0]}–{profile.period[1]})</p>
-                <div className="mt-4 grid gap-8 md:grid-cols-2">
-                  <Bars values={months.map((m) => m.precipMedianMm)} label={t.precip} unit="mm" />
-                  <Bars values={months.map((m) => m.tempMeanC)} label={t.temp} unit="°C" fmt={1} />
-                </div>
-                <details className="mt-4">
-                  <summary>{t.origin}</summary>
-                  <div className="tag mt-2">
-                    {profile.sources.slice(0, 1).map((s: any, i: number) => (
-                      <ul key={i} className="list-disc pl-5">
-                        <li>NASA POWER {s.apiVersion} · {s.sourceType} · UTC · fill {s.fillValue}</li>
-                        <li>{Array.isArray(s.effectiveLocation) ? `cell: ${s.effectiveLocation[1]}, ${s.effectiveLocation[0]} (elev ${s.effectiveLocation[2]} m)` : ""}</li>
-                        <li>{profile.spatialNote}</li>
-                        <li className="num">{t.quality}: {Object.entries(profile.quality).slice(0, 3).map(([k, v]: any) => `${k} ${v.valid}/${v.expected}`).join(" · ")}</li>
-                      </ul>
-                    ))}
-                  </div>
-                </details>
-              </>
-            )}
-          </section>
-        )}
-
-        {profile && (
-          <section aria-labelledby="ask" className="panel mt-10 p-6">
-            <h2 id="ask" className="text-2xl font-semibold">{t.tell}</h2>
-
-            <fieldset className="mt-6"><legend className="text-lg font-semibold">{t.q1}</legend>
-              <p className="tag">{t.q1h}</p>
-              {cycles.map((c, i) => (
-                <div key={i} className="mt-3 flex flex-wrap items-end gap-3">
-                  <span className="tag w-16">{t.cycle} {i + 1}</span>
-                  <label className="flex flex-col text-sm">{t.crop}
-                    <select value={c.crop} onChange={(e) => setCycles(cycles.map((x, j) => (j === i ? { ...x, crop: e.target.value } : x)))}>
-                      <option value="maize">{t.maize}</option><option value="bean">{t.bean}</option>
-                    </select></label>
-                  <label className="flex flex-col text-sm">{t.alsoWith}
-                    <select value={c.also} onChange={(e) => setCycles(cycles.map((x, j) => (j === i ? { ...x, also: e.target.value } : x)))}>
-                      <option value="">{t.none}</option><option value="maize">{t.maize}</option><option value="bean">{t.bean}</option>
-                    </select></label>
-                  <label className="flex flex-col text-sm">{t.approx}
-                    <input value={c.approx} onChange={(e) => setCycles(cycles.map((x, j) => (j === i ? { ...x, approx: e.target.value } : x)))} /></label>
-                  {cycles.length > 1 && <button className="btn ghost" onClick={() => setCycles(cycles.filter((_, j) => j !== i))}>{t.removeCycle}</button>}
-                </div>
-              ))}
-              {cycles.length < 5 && <button className="btn ghost mt-3" onClick={() => setCycles([...cycles, { crop: "maize", also: "", approx: "" }])}>{t.addCycle}</button>}
-              {hasIntercrop && <p role="status" className="risk mt-2 text-sm">{t.intercropWarn}</p>}
-            </fieldset>
-
-            <fieldset className="mt-8"><legend className="text-lg font-semibold">{t.q2}</legend>
-              <div className="mt-2 flex flex-wrap gap-4">
-                <MDInput v={usual} set={setUsual} label={t.usual} />
-                <MDInput v={winFrom} set={setWinFrom} label={t.winFrom} />
-                <MDInput v={winTo} set={setWinTo} label={t.winTo} />
-              </div>
-              <p className="tag mt-1">{t.winOpt}</p>
-              {winBad && <p role="alert" className="risk text-sm">{t.winFrom} / {t.winTo}</p>}
-            </fieldset>
-
-            <fieldset className="mt-8"><legend className="text-lg font-semibold">{t.q3}</legend>
-              <div className="mt-2 flex flex-wrap gap-4">
-                {([["rainfed", t.rainfed], ["irrigated", t.irrigated], ["both", t.both], ["unknown", t.unknownOpt]] as const).map(([v, l]) => (
-                  <label key={v} className="flex min-h-[44px] items-center gap-2"><input type="radio" name="regime" checked={regime === v} onChange={() => setRegime(v)} className="!min-h-0" />{l}</label>
-                ))}
-              </div>
-              {(regime === "irrigated" || regime === "both") && (
-                <>
-                  <div className="mt-2 flex flex-wrap gap-4">
-                    <MDInput v={irrFrom} set={setIrrFrom} label={t.irrFrom} />
-                    <MDInput v={irrTo} set={setIrrTo} label={t.irrTo} />
-                    <label className="flex flex-col text-sm">{t.irrDepth}<input inputMode="decimal" className="w-28" value={irrDepth} onChange={(e) => setIrrDepth(e.target.value)} placeholder={t.unknown} /></label>
-                    <label className="flex flex-col text-sm">{t.irrEvery}<input inputMode="numeric" className="w-28" value={irrEvery} onChange={(e) => setIrrEvery(e.target.value)} placeholder={t.unknown} /></label>
-                  </div>
-                  <p className="tag mt-1">{t.irrNeed}</p>
-                </>
-              )}
-            </fieldset>
-
-            <fieldset className="mt-8"><legend className="text-lg font-semibold">{t.q4}</legend>
-              <div className="mt-2 flex flex-wrap gap-4">
-                {(["maize", "bean"] as const).map((c) => (
-                  <label key={c} className="flex min-h-[44px] items-center gap-2"><input type="checkbox" checked={allowed.includes(c)} onChange={() => toggleCrop(c)} className="!min-h-0" />{cropLabel(c)}</label>
-                ))}
-              </div>
-              <div className="mt-3 space-y-1">
-                {([["seed", t.seedNo], ["equip", t.equipNo], ["buyer", t.buyerNo]] as const).map(([k, l]) => (
-                  <div key={k} className="flex flex-wrap items-center gap-4"><span className="text-sm">{l}</span>
-                    {(["maize", "bean"] as const).map((c) => (
-                      <label key={c} className="flex min-h-[44px] items-center gap-2 text-sm"><input type="checkbox" checked={blocked[k].includes(c)} onChange={() => toggleIn(k, c)} className="!min-h-0" />{cropLabel(c)}</label>
-                    ))}
-                  </div>
-                ))}
-                <p className="tag">{t.constraintsNote}</p>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-3">
-                {(["seed", "equipment", "buyer"] as const).map((k) => (
-                  <label key={k} className="flex flex-col text-sm">{t[k]}<input value={cons[k]} onChange={(e) => setCons({ ...cons, [k]: e.target.value })} /></label>
-                ))}
-              </div>
-            </fieldset>
-
-            <fieldset className="mt-8"><legend className="text-lg font-semibold">{t.q5}</legend>
-              <div className="mt-2 flex flex-wrap gap-4">
-                <label className="flex flex-col text-sm">{t.residues}
-                  <select value={mgmt.residues} onChange={(e) => setMgmt({ ...mgmt, residues: e.target.value })}>
-                    <option value="unknown">{t.unknown}</option><option value="retain">{t.resRetain}</option><option value="partial">{t.resPartial}</option><option value="remove">{t.resRemove}</option>
-                  </select></label>
-                {([["cover", t.cover], ["waterlog", t.waterlog], ["runoff", t.runoffQ]] as const).map(([k, l]) => (
-                  <label key={k} className="flex flex-col text-sm">{l}
-                    <select value={(mgmt as any)[k]} onChange={(e) => setMgmt({ ...mgmt, [k]: e.target.value })}>
-                      <option value="unknown">{t.unknown}</option><option value="yes">{t.yes}</option><option value="no">{t.no}</option>
-                    </select></label>
-                ))}
-                <label className="flex flex-col text-sm">{t.priority}
-                  <select value={mgmt.priority} onChange={(e) => setMgmt({ ...mgmt, priority: e.target.value })}>
-                    <option value="">{t.unknown}</option><option value="water">{t.pWater}</option><option value="soil">{t.pSoil}</option><option value="margin">{t.pMargin}</option>
-                  </select></label>
-              </div>
-              <p className="tag mt-1">{t.prioNote}</p>
-              <details className="mt-3"><summary>{t.optional}: {t.area}, {t.costs}</summary>
-                <div className="mt-2 flex flex-wrap gap-3">
-                  <label className="flex flex-col text-sm">{t.area}<input inputMode="decimal" value={opt.area} onChange={(e) => setOpt({ ...opt, area: e.target.value })} /></label>
-                  <label className="flex flex-col text-sm">{t.costs}<input inputMode="decimal" value={opt.costs} onChange={(e) => setOpt({ ...opt, costs: e.target.value })} /></label>
-                </div>
-              </details>
-            </fieldset>
-
-            <details className="mt-8 border-t border-line pt-4" open>
-              <summary className="cursor-pointer text-lg font-semibold">{t.soilTech}</summary>
-              <p className="tag mt-2">{t.soilHelp}</p>
-              <p className="mt-3 font-semibold">{t.soilSourceTitle}</p>
-              <div className="mt-1 flex flex-col gap-1">
-                {([["regional", t.srcRegional], ["farmer", t.srcFarmer], ["demo", t.srcDemo]] as const).map(([v, l]) => (
-                  <label key={v} className="flex min-h-[44px] items-center gap-2">
-                    <input type="radio" name="soilsrc" className="!min-h-0" checked={soilSource === v}
-                      disabled={v === "regional" && !(soilProf?.status === "ok" && soilProf?.hydraulics?.usable)}
-                      onChange={() => { setSoilSource(v); if (v === "demo") setSoil({ fc: "0.30", wp: "0.15" }); }} />{l}
+          <div className="inner">
+            <p className="eyebrow">{stepTitle("01", t.stepLocate)}</p>
+            <div className="panel p-5 md:p-6">
+              <h2 id="loc" className="text-2xl font-semibold">{t.placeMap}</h2>
+              {placeName && <p className="mt-1 font-semibold" aria-live="polite">{t.placeConfirmed}: {placeName}</p>}
+              <div className="mt-2"><MapPicker lat={isFinite(parseFloat(coords.lat)) ? parseFloat(coords.lat) : null} lon={isFinite(parseFloat(coords.lon)) ? parseFloat(coords.lon) : null}
+                onChange={(la, lo) => setCoords((c) => ({ ...c, lat: la.toFixed(5), lon: lo.toFixed(5) }))} unavailableText={t.mapUnavailable} failedText={t.mapFailed} flyToken={flyToken} /></div>
+              {confirmed && <p className="mt-3"><a href="#known" className="font-medium underline" onClick={goClimate}>{t.seeClimate} ↓</a></p>}
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {(["lat", "lon", "elev"] as const).map((k) => (
+                  <label key={k} className="flex flex-col text-sm">{t[k]}
+                    <input inputMode="decimal" value={coords[k]} onChange={(e) => setCoords({ ...coords, [k]: e.target.value })} />
                   </label>
                 ))}
               </div>
+              <p className="tag mt-2">{t.pointNote}</p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button className="btn" onClick={() => confirmLocation(Number(coords.lat), Number(coords.lon), coords.elev ? Number(coords.elev) : undefined)}>{t.useLoc}</button>
+                <button className="btn ghost" onClick={() => { setCoords({ lat: "17.432993", lon: "-95.02336", elev: "" }); setCycles([{ crop: "maize", also: "", approx: "" }, { crop: "bean", also: "", approx: "" }, { crop: "maize", also: "", approx: "" }]); setUsual({ m: "6", d: "15" }); }}>{t.pilot}</button>
+              </div>
+              <p className="tag mt-1">{t.pilotNote}</p>
+            </div>
+          </div>
+        </section>
 
-              <div className="mt-3 border-t border-line pt-3">
-                <button className="btn ghost" onClick={loadSoil} disabled={soilProfState === "loading"}>{soilProfState === "loading" ? t.regionalLoading : soilProfState === "error" ? t.regionalRetry : t.regionalBtn}</button>
-                {soilProfState === "error" && <p role="alert" className="risk mt-2 text-sm">{t.regionalErr} {soilProf?.qualityFlags?.includes("api_timeout") ? t.regionalTimeout : soilProf?.reason ? E(soilProf.reason) : ""}</p>}
-                {!(soilProf?.status === "ok" && soilProf?.hydraulics?.usable) && soilProfState !== "error" && <p className="tag mt-1">{t.regionalFirst}</p>}
-                {soilProf?.status === "ok" && (
-                  <div className="mt-2">
-                    <p className="tag">{t.regionalNote} SoilGrids 2.0 · {soilProf.manifest?.license}</p>
-                    {soilProf.qualityFlags?.includes("nearest_valid_cell") && <p className="risk text-sm" role="note">{t.nearestCell.replace("{m}", String(Math.round(soilProf.distanceM)))}</p>}
-                    <div className="overflow-x-auto">
-                      <table className="num tag mt-1 w-full min-w-[560px] text-left">
-                        <thead><tr><th>{t.depth}</th><th>{t.clay} ({t.range90})</th><th>{t.sand}</th><th>{t.soc}</th><th>{t.fcShort}</th><th>{t.wpShort}</th></tr></thead>
-                        <tbody>
-                          {soilProf.layers.map((L: any, i: number) => {
-                            const H = soilProf.hydraulics?.layers?.[i];
-                            return (<tr key={L.label}><td>{L.label}</td>
-                              <td>{L.clay_pct?.toFixed(1)} ({L.clay_pct_q05?.toFixed(0)}–{L.clay_pct_q95?.toFixed(0)})</td>
-                              <td>{L.sand_pct?.toFixed(1)}</td><td>{L.soc_g_kg?.toFixed(1)}</td>
-                              <td>{H ? H.fc.toFixed(3) : "—"}</td><td>{H ? H.wp.toFixed(3) : "—"}</td></tr>);
-                          })}
-                        </tbody>
-                      </table>
+        {/* ---- 02 · Discover its climate: contours soften into long flowing lines ---- */}
+        {confirmed && (
+          <section id="known" aria-labelledby="kn" className="band scroll-mt-4" data-scene>
+            <div className="layer-host" aria-hidden>
+              <div className="layer layer-flow" data-parallax="0.07" data-fade data-opacity="0.2"><i /></div>
+            </div>
+            <div className="inner">
+              <Reveal>
+                <ClimateExplorer lang={lang} t={t} months={months} period={profile?.period ?? [2005, 2024]} profile={profile} state={profileState}
+                  onRetry={() => loadProfile()} onLoad={() => loadProfile()} coords={`${confirmed.lat.toFixed(4)}, ${confirmed.lon.toFixed(4)}`} />
+              </Reveal>
+            </div>
+          </section>
+        )}
+
+        {/* ---- 03 · Tell us how you plant: steps that continue from the climate, quiet lines behind ---- */}
+        {profile && (
+          <section id="ask" aria-labelledby="ask-h" className="band scroll-mt-4" data-scene>
+            <div className="layer-host" aria-hidden>
+              <div className="layer layer-flow" data-parallax="-0.05" data-fade data-opacity="0.12" style={{ top: "12%" }}><i /></div>
+            </div>
+            <div className="inner">
+              <p className="eyebrow">{stepTitle("03", t.stepSow)}</p>
+              <h2 id="ask-h" className="text-3xl font-semibold">{t.tell}</h2>
+
+              <nav className="answers mt-4" aria-label={t.answersTitle}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="tag mr-1">{t.answersTitle}</span>
+                  {chips.map((c, i) => (
+                    <button key={i} type="button" className="chip" onClick={() => editStep(c.id)} aria-label={`${c.label}: ${c.value}. ${t.editWord}`}>
+                      <small>{c.label}</small><span>{c.value}</span>
+                    </button>
+                  ))}
+                </div>
+              </nav>
+
+              <div className="mt-8">
+                <Reveal><div className="step" id="step-1">
+                  <StepHead n={1} title={t.step1Title} />
+                  <div className="calm col-start-2 mt-3 p-5">
+                    <fieldset><legend className="font-semibold">{t.q1}</legend>
+                      <p className="tag">{t.q1h}</p>
+                      {cycles.map((c, i) => (
+                        <div key={i} className="mt-3 flex flex-wrap items-end gap-3">
+                          <span className="tag w-16">{t.cycle} {i + 1}</span>
+                          <label className="flex flex-col text-sm">{t.crop}
+                            <select value={c.crop} onChange={(e) => setCycles(cycles.map((x, j) => (j === i ? { ...x, crop: e.target.value } : x)))}>
+                              <option value="maize">{t.maize}</option><option value="bean">{t.bean}</option>
+                            </select></label>
+                          <label className="flex flex-col text-sm">{t.alsoWith}
+                            <select value={c.also} onChange={(e) => setCycles(cycles.map((x, j) => (j === i ? { ...x, also: e.target.value } : x)))}>
+                              <option value="">{t.none}</option><option value="maize">{t.maize}</option><option value="bean">{t.bean}</option>
+                            </select></label>
+                          <label className="flex flex-col text-sm">{t.approx}
+                            <input type="date" max={new Date().toISOString().slice(0, 10)} value={c.approx} onChange={(e) => setCycles(cycles.map((x, j) => (j === i ? { ...x, approx: e.target.value } : x)))} /></label>
+                          {cycles.length > 1 && <button className="btn ghost" onClick={() => setCycles(cycles.filter((_, j) => j !== i))}>{t.removeCycle}</button>}
+                        </div>
+                      ))}
+                      {cycles.length < 5 && <button className="btn ghost mt-3" onClick={() => setCycles([...cycles, { crop: "maize", also: "", approx: "" }])}>{t.addCycle}</button>}
+                      {hasIntercrop && <p role="status" className="risk mt-2 text-sm">{t.intercropWarn}</p>}
+                    </fieldset>
+                  </div>
+                </div></Reveal>
+
+                <Reveal><div className="step" id="step-2">
+                  <StepHead n={2} title={t.step2Title} />
+                  <div className="calm col-start-2 mt-3 p-5">
+                    <fieldset><legend className="font-semibold">{t.q2}</legend>
+                      <div className="mt-2 flex flex-wrap gap-4">
+                        <MDInput v={usual} set={setUsual} label={t.usual} />
+                        <MDInput v={winFrom} set={setWinFrom} label={t.winFrom} />
+                        <MDInput v={winTo} set={setWinTo} label={t.winTo} />
+                      </div>
+                      <p className="tag mt-1">{t.winOpt}</p>
+                      {winBad && <p role="alert" className="risk text-sm">{t.winFrom} / {t.winTo}</p>}
+                    </fieldset>
+                    <fieldset className="mt-6"><legend className="font-semibold">{t.q3}</legend>
+                      <div className="mt-2 flex flex-wrap gap-4">
+                        {([["rainfed", t.rainfed], ["irrigated", t.irrigated], ["both", t.both], ["unknown", t.unknownOpt]] as const).map(([v, l]) => (
+                          <label key={v} className="flex min-h-[44px] items-center gap-2"><input type="radio" name="regime" checked={regime === v} onChange={() => setRegime(v)} className="!min-h-0" />{l}</label>
+                        ))}
+                      </div>
+                      {(regime === "irrigated" || regime === "both") && (
+                        <>
+                          <div className="mt-2 flex flex-wrap gap-4">
+                            <MDInput v={irrFrom} set={setIrrFrom} label={t.irrFrom} />
+                            <MDInput v={irrTo} set={setIrrTo} label={t.irrTo} />
+                            <label className="flex flex-col text-sm">{t.irrDepth}<input inputMode="decimal" className="w-28" value={irrDepth} onChange={(e) => setIrrDepth(e.target.value)} placeholder={t.unknown} /></label>
+                            <label className="flex flex-col text-sm">{t.irrEvery}<input inputMode="numeric" className="w-28" value={irrEvery} onChange={(e) => setIrrEvery(e.target.value)} placeholder={t.unknown} /></label>
+                          </div>
+                          <p className="tag mt-1">{t.irrNeed}</p>
+                        </>
+                      )}
+                    </fieldset>
+                  </div>
+                </div></Reveal>
+
+                <Reveal><div className="step" id="step-3">
+                  <StepHead n={3} title={t.step3Title} />
+                  <div className="calm col-start-2 mt-3 p-5">
+                    <fieldset><legend className="font-semibold">{t.q4}</legend>
+                      <div className="mt-2 flex flex-wrap gap-4">
+                        {(["maize", "bean"] as const).map((c) => (
+                          <label key={c} className="flex min-h-[44px] items-center gap-2"><input type="checkbox" checked={allowed.includes(c)} onChange={() => toggleCrop(c)} className="!min-h-0" />{cropLabel(c)}</label>
+                        ))}
+                      </div>
+                      <div className="mt-3 space-y-1">
+                        {([["seed", t.seedNo], ["equip", t.equipNo], ["buyer", t.buyerNo]] as const).map(([k, l]) => (
+                          <div key={k} className="flex flex-wrap items-center gap-4"><span className="text-sm">{l}</span>
+                            {(["maize", "bean"] as const).map((c) => (
+                              <label key={c} className="flex min-h-[44px] items-center gap-2 text-sm"><input type="checkbox" checked={blocked[k].includes(c)} onChange={() => toggleIn(k, c)} className="!min-h-0" />{cropLabel(c)}</label>
+                            ))}
+                          </div>
+                        ))}
+                        <p className="tag">{t.constraintsNote}</p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-3">
+                        {(["seed", "equipment", "buyer"] as const).map((k) => (
+                          <label key={k} className="flex flex-col text-sm">{t[k]}<input value={cons[k]} onChange={(e) => setCons({ ...cons, [k]: e.target.value })} /></label>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <fieldset className="mt-6"><legend className="font-semibold">{t.q5}</legend>
+                      <div className="mt-2 flex flex-wrap gap-4">
+                        <label className="flex flex-col text-sm">{t.residues}
+                          <select value={mgmt.residues} onChange={(e) => setMgmt({ ...mgmt, residues: e.target.value })}>
+                            <option value="unknown">{t.unknown}</option><option value="retain">{t.resRetain}</option><option value="partial">{t.resPartial}</option><option value="remove">{t.resRemove}</option>
+                          </select></label>
+                        {([["cover", t.cover], ["waterlog", t.waterlog], ["runoff", t.runoffQ]] as const).map(([k, l]) => (
+                          <label key={k} className="flex flex-col text-sm">{l}
+                            <select value={(mgmt as any)[k]} onChange={(e) => setMgmt({ ...mgmt, [k]: e.target.value })}>
+                              <option value="unknown">{t.unknown}</option><option value="yes">{t.yes}</option><option value="no">{t.no}</option>
+                            </select></label>
+                        ))}
+                        <label className="flex flex-col text-sm">{t.priority}
+                          <select value={mgmt.priority} onChange={(e) => setMgmt({ ...mgmt, priority: e.target.value })}>
+                            <option value="">{t.unknown}</option><option value="water">{t.pWater}</option><option value="soil">{t.pSoil}</option><option value="margin">{t.pMargin}</option>
+                          </select></label>
+                      </div>
+                      <p className="tag mt-1">{t.prioNote}</p>
+                      <details className="mt-3"><summary>{t.optional}: {t.area}, {t.costs}</summary>
+                        <div className="mt-2 flex flex-wrap gap-3">
+                          <label className="flex flex-col text-sm">{t.area}<input inputMode="decimal" value={opt.area} onChange={(e) => setOpt({ ...opt, area: e.target.value })} /></label>
+                          <label className="flex flex-col text-sm">{t.costs}<input inputMode="decimal" value={opt.costs} onChange={(e) => setOpt({ ...opt, costs: e.target.value })} /></label>
+                        </div>
+                      </details>
+                    </fieldset>
+                  </div>
+                </div></Reveal>
+
+                <Reveal><div className="step" id="step-4">
+                  <StepHead n={4} title={t.step4Title} />
+                  <div className="calm col-start-2 mt-3 p-5">
+                    <p className="font-semibold">{t.soilTech}</p>
+                    <p className="tag">{t.soilHelp}</p>
+                    <p className="mt-3 font-semibold">{t.soilSourceTitle}</p>
+                    <div className="mt-1 flex flex-col gap-1">
+                      {([["regional", t.srcRegional], ["farmer", t.srcFarmer], ["demo", t.srcDemo]] as const).map(([v, l]) => (
+                        <label key={v} className="flex min-h-[44px] items-center gap-2">
+                          <input type="radio" name="soilsrc" className="!min-h-0" checked={soilSource === v}
+                            disabled={v === "regional" && !(soilProf?.status === "ok" && soilProf?.hydraulics?.usable)}
+                            onChange={() => { setSoilSource(v); if (v === "demo") setSoil({ fc: "0.30", wp: "0.15" }); }} />{l}
+                        </label>
+                      ))}
                     </div>
-                    <p className="tag mt-1">{t.ptfNote}</p>
-                    {!soilProf.hydraulics?.usable && <p className="risk text-sm">{t.regionalBlocked}: {soilProf.hydraulics?.issues?.join("; ")}</p>}
+
+                    <div className="mt-3 border-t border-line pt-3">
+                      <button className="btn ghost" onClick={loadSoil} disabled={soilProfState === "loading"}>{soilProfState === "loading" ? t.regionalLoading : soilProfState === "error" ? t.regionalRetry : t.regionalBtn}</button>
+                      {soilProfState === "error" && <p role="alert" className="risk mt-2 text-sm">{t.regionalErr} {soilProf?.qualityFlags?.includes("api_timeout") ? t.regionalTimeout : soilProf?.reason ? E(soilProf.reason) : ""}</p>}
+                      {!(soilProf?.status === "ok" && soilProf?.hydraulics?.usable) && soilProfState !== "error" && <p className="tag mt-1">{t.regionalFirst}</p>}
+                      {soilProf?.status === "ok" && (
+                        <div className="mt-2">
+                          <p className="tag">{t.regionalNote} SoilGrids 2.0 · {soilProf.manifest?.license}</p>
+                          {soilProf.qualityFlags?.includes("nearest_valid_cell") && <p className="risk text-sm" role="note">{t.nearestCell.replace("{m}", String(Math.round(soilProf.distanceM)))}</p>}
+                          <div className="overflow-x-auto">
+                            <table className="num tag mt-1 w-full min-w-[560px] text-left">
+                              <thead><tr><th>{t.depth}</th><th>{t.clay} ({t.range90})</th><th>{t.sand}</th><th>{t.soc}</th><th>{t.fcShort}</th><th>{t.wpShort}</th></tr></thead>
+                              <tbody>
+                                {soilProf.layers.map((L: any, i: number) => {
+                                  const H = soilProf.hydraulics?.layers?.[i];
+                                  return (<tr key={L.label}><td>{L.label}</td>
+                                    <td>{L.clay_pct?.toFixed(1)} ({L.clay_pct_q05?.toFixed(0)}–{L.clay_pct_q95?.toFixed(0)})</td>
+                                    <td>{L.sand_pct?.toFixed(1)}</td><td>{L.soc_g_kg?.toFixed(1)}</td>
+                                    <td>{H ? H.fc.toFixed(3) : "—"}</td><td>{H ? H.wp.toFixed(3) : "—"}</td></tr>);
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                          <p className="tag mt-1">{t.ptfNote}</p>
+                          {!soilProf.hydraulics?.usable && <p className="risk text-sm">{t.regionalBlocked}: {soilProf.hydraulics?.issues?.join("; ")}</p>}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-3 border-t border-line pt-3">
+                      <label className="flex flex-col text-sm">{t.fc}<input inputMode="decimal" value={soil.fc} disabled={soilSource === "regional"} onChange={(e) => { setSoil({ ...soil, fc: e.target.value }); setSoilSource("farmer"); }} placeholder={t.unknown} /></label>
+                      <label className="flex flex-col text-sm">{t.wp}<input inputMode="decimal" value={soil.wp} disabled={soilSource === "regional"} onChange={(e) => { setSoil({ ...soil, wp: e.target.value }); setSoilSource("farmer"); }} placeholder={t.unknown} /></label>
+                      <button className="btn ghost self-end" disabled={soilSource === "regional"} onClick={() => { setSoil({ fc: "", wp: "" }); setSoilSource(""); }}>{t.unknown}</button>
+                    </div>
+                    {soilSource === "regional" && <p className="tag mt-1" role="note">{t.soilFieldsLocked}</p>}
+                    {soilSource === "demo" && <p className="tag mt-2" role="note">{t.demoTag}</p>}
+                    {!soilSource && <p className="risk mt-2 text-sm">{t.soilNeed}</p>}
+                  </div>
+                </div></Reveal>
+
+                <button className="btn" onClick={compare} disabled={runState === "loading" || winBad}>{runState === "loading" ? t.computing : t.compute}</button>
+                {runState === "error" && <p role="alert" className="risk mt-2">{runErr === "422" ? `${t.winFrom} / ${t.usual}` : t.apiDown}</p>}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ---- 04 · Explore what to plant in each cycle: aligned cycles, simulator next to them ---- */}
+        {run && (
+          <section id="results" aria-labelledby="cmp" className="band scroll-mt-4" data-scene>
+            <div className="inner">
+              <p className="eyebrow">{stepTitle("04", t.stepExplore)}</p>
+              <h2 id="cmp" tabIndex={-1} className="text-3xl font-semibold">{t.cmpTitle}</h2>
+              <p className="tag">{t.mode}</p>
+              {run.warnings?.length > 0 && <ul className="risk mt-2 list-disc pl-5 text-sm" role="status">{run.warnings.map((w: string) => <li key={w}>{E(w)}</li>)}</ul>}
+              {simRun?.calendar?.scenarioOutsideWindow && <p role="alert" className="risk mt-2 text-sm">{t.outsideWindow}</p>}
+
+              {(() => {
+                const nCols = Math.max(1, ...run.rotations.map((r: any) => (r.sequence ?? r.history ?? []).length));
+                const cur = run.rotations[0];
+                const curSeq: string[] | null = cur.sequence;
+                const curS = cur.indicators.A.summary;
+                const curAdj = simRun?.rotations?.[0]?.indicators?.A?.summary;
+                return (
+                  <div className="mt-6" style={{ ["--cols" as any]: nCols }}>
+                    <div className="cycles-head" aria-hidden><span />{Array.from({ length: nCols }).map((_, j) => <span key={j}>{t.cycle} {j + 1}</span>)}</div>
+                    {run.rotations.map((r: any, i: number) => {
+                      const base = r.indicators.A; const sc = simRun?.rotations?.[i]?.indicators?.A;
+                      const adjusted = !!(simOn && simRun && sc?.summary && base.summary);
+                      const S = adjusted ? sc.summary : base.summary;
+                      const d = adjusted ? sc.summary.medianA - base.summary.medianA : 0; // unrounded medians, as specified
+                      const A = adjusted ? sc : base;
+                      const cells: { c: string; text: string }[] = r.sequence
+                        ? r.sequence.map((c: string) => ({ c, text: cropLabel(c) }))
+                        : (r.history ?? []).map((h: any) => ({ c: h.crops.length > 1 ? "mixed" : h.crops[0], text: h.crops.map(cropLabel).join(" + ") }));
+                      const diffs = i > 0 && curSeq && r.sequence
+                        ? r.sequence.map((c: string, j: number) => (c !== curSeq[j] ? `${t.cycle} ${j + 1}: ${cropLabel(curSeq[j])} → ${cropLabel(c)}` : null)).filter(Boolean) as string[]
+                        : null;
+                      const curShown = adjusted && curAdj ? curAdj : curS;
+                      return (
+                        <article key={r.id} className="row-card">
+                          <div className="cycle-row">
+                            <div>
+                              <h3 className="text-lg font-semibold leading-tight">{label(r, i)}</h3>
+                              {r.structure && <span className="mt-1 inline-block border border-ink px-1.5 text-xs">{r.structure === "monoculture" ? t.monoculture : r.structure === "intercrop" ? t.structIntercrop : t.structRotation}</span>}
+                            </div>
+                            {Array.from({ length: nCols }).map((_, j) => cells[j]
+                              ? <span key={j} className="crop-chip" data-crop={cells[j].c}>{cells[j].text}</span>
+                              : <span key={j} />)}
+                          </div>
+
+                          <div className="mt-3 md:pl-[178px]">
+                            {i > 0 && (
+                              <div className="mb-2">
+                                <p className="text-sm font-semibold">{t.changesTitle}</p>
+                                {diffs === null
+                                  ? <p className="tag">{t.currentIntercropNote}</p>
+                                  : diffs.length ? <ul className="tag list-disc pl-5">{diffs.map((x) => <li key={x}>{x}</li>)}</ul> : <p className="tag">{t.sameAsCurrent}</p>}
+                              </div>
+                            )}
+                            <p className="text-sm font-semibold">{t.helpsTitle}</p>
+                            <p className="num" aria-live="polite">
+                              <strong>{indName.A}:</strong>{" "}
+                              {S ? <>{t.median} {S.medianA.toFixed(1)}/100{adjusted && <span> ({signed(d)} {t.vsBase})</span>}
+                                <span className="tag"> · P10–P90 {S.p10.toFixed(1)}–{S.p90.toFixed(1)} · {S.validBlocks}/{S.totalBlocks} {t.valid}{adjusted ? ` · ${t.scenarioPct}` : ""}</span></>
+                                : <span>{t.pending}</span>}
+                            </p>
+                            {i > 0 && S && curShown && (
+                              <p className="tag">{t.helpsTpl.replace("{m}", S.medianA.toFixed(1)).replace("{cm}", curShown.medianA.toFixed(1)).replace("{p}", S.p10.toFixed(1)).replace("{cp}", curShown.p10.toFixed(1))}</p>
+                            )}
+                            {S && soilLine && <p className="tag">{soilLine}</p>}
+                            {adjusted && d === 0 && S.medianA >= 99.95 && <p className="tag">{t.ceiling}</p>}
+                            {A.status === "conditional" && <p className="risk text-sm">{t.conditional}</p>}
+                            {A.conditions?.length > 0 && <ul className="tag list-disc pl-5">{A.conditions.map((c: string) => <li key={c}>{E(c)}</li>)}</ul>}
+                            {(!S || A.status === "conditional") && (A.reason || A.missing?.length > 0) && (
+                              <p className="tag">{E(A.reason ?? "")}{A.missing?.map((m: any) => ` ${t.falta} (${kind(m.kind)}): ${E(m.item)}.`)}</p>
+                            )}
+                            {i > 0 && <p className="tag">{t.noRecommend}</p>}
+                            <p className="risk mt-1 text-sm">{t.overallMissing}{r.overall?.missing?.length ? `: ${t.missingIndicators} ${r.overall.missing.map((k: string) => (t as any)["ind" + k]).join(", ")}` : ""}</p>
+                            <details className="mt-1">
+                              <summary className="tag cursor-pointer underline">{t.moreDetail}</summary>
+                              <ul className="tag mt-1 list-none p-0">
+                                {(run.explanationOrder as string[]).filter((k) => k !== "A").map((k) => (
+                                  <li key={k}><strong>{indName[k]}:</strong> {t.pending}.{" "}
+                                    <details className="inline"><summary className="inline cursor-pointer underline">{t.whatMissing}</summary>
+                                      <ul className="list-disc pl-5">{r.indicators[k].missing.map((m: any) => <li key={m.item}>{kind(m.kind)}: {E(m.item)}{m.note ? ` — ${E(m.note)}` : ""}</li>)}</ul>
+                                    </details></li>
+                                ))}
+                              </ul>
+                            </details>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+              <p className="tag mt-2">{t.range}</p>
+
+              {/* simulator right next to the comparison so its effects read in the same context */}
+              <div className="panel mt-6 p-5 md:p-6">
+                <h2 className="text-2xl font-semibold">{t.sim}</h2>
+                {!simOn ? <button className="btn mt-3" onClick={() => setSimOn(true)}>{t.simStart}</button> : (
+                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                    <label className="flex flex-col">{t.shift}: <span className="num">{shift > 0 ? "+" : ""}{shift}</span>
+                      <input type="range" min={-30} max={30} value={shift} onChange={(e) => setShift(Number(e.target.value))} className="!min-h-[44px]" /></label>
+                    <label className="flex flex-col">{t.rain}: <span className="num">{rain}%</span>
+                      <input type="range" min={70} max={130} value={rain} onChange={(e) => setRain(Number(e.target.value))} className="!min-h-[44px]" /></label>
+                    <p className="tag sm:col-span-2">{t.rainNote} · {t.notRecalc}: H, S, E, U</p>
+                    <div className="flex items-center gap-3">
+                      <button className="btn ghost" onClick={() => { setShift(0); setRain(100); setSimRun(null); }}>{t.reset}</button>
+                      {simBusy && <span role="status">{t.computing}</span>}
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-3 border-t border-line pt-3">
-                <label className="flex flex-col text-sm">{t.fc}<input inputMode="decimal" value={soil.fc} disabled={soilSource === "regional"} onChange={(e) => { setSoil({ ...soil, fc: e.target.value }); setSoilSource("farmer"); }} placeholder={t.unknown} /></label>
-                <label className="flex flex-col text-sm">{t.wp}<input inputMode="decimal" value={soil.wp} disabled={soilSource === "regional"} onChange={(e) => { setSoil({ ...soil, wp: e.target.value }); setSoilSource("farmer"); }} placeholder={t.unknown} /></label>
-                <button className="btn ghost self-end" disabled={soilSource === "regional"} onClick={() => { setSoil({ fc: "", wp: "" }); setSoilSource(""); }}>{t.unknown}</button>
+              {(() => {
+                const notes: any[] = run.screening?.notes ?? [];
+                const altCount = run.rotations.length - 1;
+                const limits = altCount < 2 ? notes.filter((n) => n.code !== "intercrop_current") : [];
+                const inter = notes.filter((n) => n.code === "intercrop_current");
+                return (<div className="mt-4">
+                  {limits.length > 0 && <p className="tag"><strong>{t.altLimit}:</strong> {limits.map((n) => reasonText(lang, n.code, n.params)).join(" ")}</p>}
+                  {inter.length > 0 && <p className="tag">{inter.map((n) => reasonText(lang, n.code, n.params)).join(" ")}</p>}
+                </div>);
+              })()}
+              <p className="tag"><strong>{t.soilUsed}:</strong> {run.soil?.active === "regional" ? t.srcRegional : run.soil?.active === "farmer" ? t.srcFarmer : run.soil?.active === "demo" ? t.srcDemo : t.soilUsedNone}</p>
+              <p className="tag">{t.ksNote}</p>
+              <details className="calm mt-3 p-4">
+                <summary className="cursor-pointer font-semibold">{t.screeningTitle}</summary>
+                <p className="tag mt-2">{t.reviewedNote}</p>
+                <ul className="mt-2 list-none space-y-3 p-0">
+                  {run.screening.candidates.map((c: any) => (
+                    <li key={c.sequence.join("-")} className="border-t border-line pt-2">
+                      <strong>{c.sequence.map(cropLabel).join(" → ")}</strong>{" "}
+                      <span className="border border-ink px-1 text-sm">{c.decision === "selected" ? t.decSelected : c.decision === "admitted_not_selected" ? t.decAdmitted : t.decDiscarded}</span>
+                      <ul className="tag list-none p-0">
+                        {c.checks.map((k: any, j: number) => (
+                          <li key={j}>{k.status === "met" ? "✓" : k.status === "failed" ? "✗" : "–"} <em>{k.status === "met" ? t.stMet : k.status === "failed" ? t.stFailed : t.stNot}</em>: {reasonText(lang, k.code, k.params)}</li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+              {mgmtOrderNote(run, t)}
+
+              <div className="calm mt-4 p-4">
+                <h3 className="font-semibold">{t.calendarTitle}</h3>
+                <ul className="num tag mt-1 flex flex-wrap gap-x-5">
+                  {run.calendar.candidates.map((c: any) => (
+                    <li key={c.shiftDays}>{String(c.day).padStart(2, "0")}/{String(c.month).padStart(2, "0")} ({c.shiftDays > 0 ? "+" : ""}{c.shiftDays} d): {c.viable ? t.viable : t.notViable}</li>
+                  ))}
+                </ul>
+                {run.calendar.note && <p className="tag">{E(run.calendar.note)}</p>}
               </div>
-              {soilSource === "regional" && <p className="tag mt-1" role="note">{t.soilFieldsLocked}</p>}
-              {soilSource === "demo" && <p className="tag mt-2" role="note">{t.demoTag}</p>}
-              {!soilSource && <p className="risk mt-2 text-sm">{t.soilNeed}</p>}
-            </details>
+              <details className="mt-2"><summary>{t.assumptions}</summary><ul className="tag list-disc pl-5">{run.assumptions.map((a: string) => <li key={a}>{E(a)}</li>)}</ul></details>
 
-            <button className="btn mt-6" onClick={compare} disabled={runState === "loading" || winBad}>{runState === "loading" ? t.computing : t.compute}</button>
-            {runState === "error" && <p role="alert" className="risk mt-2">{runErr === "422" ? `${t.winFrom} / ${t.usual}` : t.apiDown}</p>}
-          </section>
-        )}
-
-        {run && (
-          <section aria-labelledby="cmp" className="mt-10">
-            <h2 id="cmp" className="text-3xl font-semibold">{t.three}</h2>
-            <p className="tag">{t.mode}</p>
-            {run.warnings?.length > 0 && <ul className="risk mt-2 list-disc pl-5 text-sm" role="status">{run.warnings.map((w: string) => <li key={w}>{E(w)}</li>)}</ul>}
-            {simRun?.calendar?.scenarioOutsideWindow && <p role="alert" className="risk mt-2 text-sm">{t.outsideWindow}</p>}
-
-            <div className="mt-4 space-y-4">
-              {run.rotations.map((r: any, i: number) => {
-                const base = r.indicators.A; const sc = simRun?.rotations?.[i]?.indicators?.A;
-                const adjusted = !!(simOn && simRun && sc?.summary && base.summary);
-                const S = adjusted ? sc.summary : base.summary;
-                const d = adjusted ? sc.summary.medianA - base.summary.medianA : 0; // unrounded medians, as specified
-                const A = adjusted ? sc : base;
-                return (
-                  <article key={r.id} className="panel p-5">
-                    <h3 className="text-xl font-semibold">{label(r, i)}{r.structure && <span className="ml-2 border border-ink px-2 py-0.5 align-middle text-sm font-normal">{r.structure === "monoculture" ? t.monoculture : r.structure === "intercrop" ? t.structIntercrop : t.structRotation}</span>}</h3>
-                    {r.sequence ? (
-                      <div className="mt-2 flex gap-1" role="img" aria-label={r.sequence.map(cropLabel).join(" → ")}>
-                        {r.sequence.map((c: string, j: number) => (
-                          <div key={j} className="flex-1 border border-line bg-[#EDE6D3] px-2 py-1 text-sm">{`${j + 1} · ${cropLabel(c)}`}</div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="mt-2 flex gap-1" aria-label={t.hist}>
-                        {r.history.map((h: any, j: number) => (
-                          <div key={j} className="flex-1 border border-line bg-[#EDE6D3] px-2 py-1 text-sm">{`${j + 1} · ${h.crops.map(cropLabel).join(" + ")}`}</div>
-                        ))}
-                      </div>
-                    )}
-
-                    <p className="mt-3 num" aria-live="polite">
-                      <strong>{indName.A}:</strong>{" "}
-                      {S ? <>{t.median} {S.medianA.toFixed(1)}/100{adjusted && <span> ({signed(d)} {t.vsBase})</span>}
-                        <span className="tag"> · P10–P90 {S.p10.toFixed(1)}–{S.p90.toFixed(1)} · {S.validBlocks}/{S.totalBlocks} {t.valid}{adjusted ? ` · ${t.scenarioPct}` : ""}</span></>
-                        : <span>{t.pending}</span>}
-                    </p>
-                    {S && soilLine && <p className="tag">{soilLine}</p>}
-                    {adjusted && d === 0 && S.medianA >= 99.95 && <p className="tag">{t.ceiling}</p>}
-                    {A.status === "conditional" && <p className="risk text-sm">{t.conditional}</p>}
-                    {A.conditions?.length > 0 && <ul className="tag list-disc pl-5">{A.conditions.map((c: string) => <li key={c}>{E(c)}</li>)}</ul>}
-                    {(!S || A.status === "conditional") && (A.reason || A.missing?.length > 0) && (
-                      <p className="tag">{E(A.reason ?? "")}{A.missing?.map((m: any) => ` ${t.falta} (${kind(m.kind)}): ${E(m.item)}.`)}</p>
-                    )}
-
-                    <ul className="tag mt-2 list-none p-0">
-                      {(run.explanationOrder as string[]).filter((k) => k !== "A").map((k) => (
-                        <li key={k}><strong>{indName[k]}:</strong> {t.pending}.{" "}
-                          <details className="inline"><summary className="inline cursor-pointer underline">{t.whatMissing}</summary>
-                            <ul className="list-disc pl-5">{r.indicators[k].missing.map((m: any) => <li key={m.item}>{kind(m.kind)}: {E(m.item)}{m.note ? ` — ${E(m.note)}` : ""}</li>)}</ul>
-                          </details></li>
-                      ))}
-                    </ul>
-                    <p className="risk mt-2 text-sm">{t.overallMissing}{r.overall?.missing?.length ? `: ${t.missingIndicators} ${r.overall.missing.map((k: string) => (t as any)["ind" + k]).join(", ")}` : ""}</p>
-                  </article>
-                );
-              })}
-            </div>
-            <p className="tag mt-2">{t.range}</p>
-            {(() => {
-              const notes: any[] = run.screening?.notes ?? [];
-              const altCount = run.rotations.length - 1;
-              const limits = altCount < 2 ? notes.filter((n) => n.code !== "intercrop_current") : [];
-              const inter = notes.filter((n) => n.code === "intercrop_current");
-              return (<>
-                {limits.length > 0 && <p className="tag"><strong>{t.altLimit}:</strong> {limits.map((n) => reasonText(lang, n.code, n.params)).join(" ")}</p>}
-                {inter.length > 0 && <p className="tag">{inter.map((n) => reasonText(lang, n.code, n.params)).join(" ")}</p>}
-              </>);
-            })()}
-            <p className="tag"><strong>{t.soilUsed}:</strong> {run.soil?.active === "regional" ? t.srcRegional : run.soil?.active === "farmer" ? t.srcFarmer : run.soil?.active === "demo" ? t.srcDemo : t.soilUsedNone}</p>
-            <p className="tag">{t.ksNote}</p>
-            <details className="panel mt-3 p-4">
-              <summary className="cursor-pointer font-semibold">{t.screeningTitle}</summary>
-              <p className="tag mt-2">{t.reviewedNote}</p>
-              <ul className="mt-2 list-none space-y-3 p-0">
-                {run.screening.candidates.map((c: any) => (
-                  <li key={c.sequence.join("-")} className="border-t border-line pt-2">
-                    <strong>{c.sequence.map(cropLabel).join(" → ")}</strong>{" "}
-                    <span className="border border-ink px-1 text-sm">{c.decision === "selected" ? t.decSelected : c.decision === "admitted_not_selected" ? t.decAdmitted : t.decDiscarded}</span>
-                    <ul className="tag list-none p-0">
-                      {c.checks.map((k: any, j: number) => (
-                        <li key={j}>{k.status === "met" ? "✓" : k.status === "failed" ? "✗" : "–"} <em>{k.status === "met" ? t.stMet : k.status === "failed" ? t.stFailed : t.stNot}</em>: {reasonText(lang, k.code, k.params)}</li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
-            </details>
-            {mgmtOrderNote(run, t)}
-
-            <div className="panel mt-6 p-5">
-              <h3 className="font-semibold">{t.calendarTitle}</h3>
-              <ul className="num tag mt-1 flex flex-wrap gap-x-5">
-                {run.calendar.candidates.map((c: any) => (
-                  <li key={c.shiftDays}>{String(c.day).padStart(2, "0")}/{String(c.month).padStart(2, "0")} ({c.shiftDays > 0 ? "+" : ""}{c.shiftDays} d): {c.viable ? t.viable : t.notViable}</li>
-                ))}
-              </ul>
-              {run.calendar.note && <p className="tag">{E(run.calendar.note)}</p>}
-            </div>
-            <details className="mt-2"><summary>{t.assumptions}</summary><ul className="tag list-disc pl-5">{run.assumptions.map((a: string) => <li key={a}>{E(a)}</li>)}</ul></details>
-
-            <div className="panel mt-8 p-6">
-              <h2 className="text-2xl font-semibold">{t.sim}</h2>
-              {!simOn ? <button className="btn mt-3" onClick={() => setSimOn(true)}>{t.simStart}</button> : (
-                <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                  <label className="flex flex-col">{t.shift}: <span className="num">{shift > 0 ? "+" : ""}{shift}</span>
-                    <input type="range" min={-30} max={30} value={shift} onChange={(e) => setShift(Number(e.target.value))} className="!min-h-[44px]" /></label>
-                  <label className="flex flex-col">{t.rain}: <span className="num">{rain}%</span>
-                    <input type="range" min={70} max={130} value={rain} onChange={(e) => setRain(Number(e.target.value))} className="!min-h-[44px]" /></label>
-                  <p className="tag sm:col-span-2">{t.rainNote} · {t.notRecalc}: H, S, E, U</p>
-                  <div className="flex items-center gap-3">
-                    <button className="btn ghost" onClick={() => { setShift(0); setRain(100); setSimRun(null); }}>{t.reset}</button>
-                    {simBusy && <span role="status">{t.computing}</span>}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-8">
-              <h2 className="text-2xl font-semibold">{t.methods}</h2>
-              <p className="mt-1">{t.methodsText}</p>
-              <button className="btn ghost mt-3" onClick={() => {
-                const cur = simRun ?? run;
-                const blob = new Blob([JSON.stringify(cur, null, 2)], { type: "application/json" });
-                const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `heirloom-${cur.runId}.json`; a.click();
-              }}>{t.export}</button>
+              <div className="mt-8">
+                <h2 className="text-2xl font-semibold">{t.methods}</h2>
+                <p className="mt-1 max-w-3xl">{t.methodsText}</p>
+                <button className="btn ghost mt-3" onClick={() => {
+                  const cur = simRun ?? run;
+                  const blob = new Blob([JSON.stringify(cur, null, 2)], { type: "application/json" });
+                  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `heirloom-${cur.runId}.json`; a.click();
+                }}>{t.export}</button>
+              </div>
             </div>
           </section>
         )}
-        <p className="tag mt-12">{t.note}</p>
+        <div className="band !py-8"><div className="inner"><p className="tag">{t.note}</p></div></div>
       </div>
     </main>
   );
